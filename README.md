@@ -1,8 +1,13 @@
-# Travel Pokédex v0.2
+# Travel Pokédex v0.3
 
-A static PWA prototype inspired by Polarsteps, focused on a lifelong travel archive: journeys, timeline, moments, places, collection and map.
+Prototype focused on testing the core archive UX.
 
-## Test
-Open `index.html` locally, or deploy the folder to GitHub Pages.
+## New in v0.3
+- Local bundled artwork, so the prototype no longer depends on remote image URLs.
+- Existing journeys can be edited.
+- Existing journeys can be deleted.
+- New journeys persist in browser localStorage.
+- Photos selected from the phone are stored locally in the browser for the prototype.
+- Home statistics and Collection update automatically.
 
-The prototype includes a sample Las Vegas journey, timeline, map visualization, collection and an add-journey form with image/video picker UI.
+This is still a prototype. A real version should move trip data and media to a proper backend/storage layer.
