@@ -2,7 +2,7 @@
   "id": "travel-pokedex",
   "name": "Travel Pokédex",
   "short_name": "Travel Pokédex",
-  "description": "A personal archive of the places you have been.",
+  "description": "Et personligt arkiv over de steder, du har været.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -34,8 +34,8 @@
   ],
   "shortcuts": [
     {
-      "name": "Add journey",
-      "short_name": "Add",
+      "name": "Tilføj rejse",
+      "short_name": "Tilføj",
       "url": "./#/new",
       "icons": [
         {
@@ -45,5 +45,6 @@
         }
       ]
     }
-  ]
+  ],
+  "lang": "da"
 }

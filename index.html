@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="da">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
-<meta name="theme-color" content="#e9e9ea"><meta name="description" content="A personal archive of the places you have been.">
+<meta name="theme-color" content="#e9e9ea"><meta name="description" content="Et personligt arkiv over de steder, du har været.">
 <meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Travel Pokédex">
 <link rel="manifest" href="manifest.json"><link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="stylesheet" href="fonts/fonts.css">
@@ -98,7 +98,7 @@ button{cursor:pointer;border:0;background:none;padding:0}
 .ratio{display:flex;align-items:flex-end;gap:6px}.ratio .cap{padding-bottom:8px}
 .stampCard{margin:18px 20px 0;border-radius:28px;background:var(--card);box-shadow:var(--shadow);padding:18px 8px;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px 2px}
 .stampWrap{position:relative;display:flex;align-items:center;justify-content:center;min-width:150px;min-height:130px}
-.blotch{position:absolute;left:50%;top:50%;width:104px;height:104px;margin:-52px 0 0 -52px;border-radius:52px;background:var(--amb)}
+.blotch{position:absolute;left:50%;top:50%;width:104px;height:104px;margin:-52px 0 0 -52px;border-radius:52px;background:var(--amb);opacity:.55}
 .stampWrap svg{position:relative;z-index:1}
 .emptySlot{width:130px;height:80px;border:1.5px dashed #b4b6ba;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transform:rotate(3deg);font-size:12px;color:var(--muted)}
 .passCard{margin:14px 20px 0;display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:76px}
@@ -145,6 +145,7 @@ button{cursor:pointer;border:0;background:none;padding:0}
 .primary{width:100%;height:52px;border-radius:26px;background:var(--ink);color:#fff;font-weight:700;font-size:15px}
 .primary[disabled]{opacity:.5;cursor:default}
 .secondary{height:46px;padding:0 18px;border-radius:23px;background:#fff;box-shadow:var(--shadow);font-weight:500;font-size:14px}
+.secondary[aria-pressed=true]{background:var(--ink);color:#fff}
 .danger{height:46px;padding:0 18px;border-radius:23px;background:#f6dcd6;color:#8f2a17;font-weight:600;font-size:14px}
 .modal{position:fixed;inset:0;background:rgba(11,11,12,.55);z-index:20;display:none;align-items:flex-end;justify-content:center}.modal.show{display:flex}
 .sheet{background:var(--bg);width:min(560px,100%);max-height:92vh;max-height:92dvh;overflow:auto;border-radius:28px 28px 0 0;padding:20px}
@@ -197,22 +198,100 @@ button{cursor:pointer;border:0;background:none;padding:0}
 
 @media(min-width:700px){body{padding:20px 0}.app{border-radius:32px;overflow:hidden;box-shadow:0 20px 80px #0002;min-height:calc(100vh - 40px);min-height:calc(100dvh - 40px)}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.pickBtn{display:inline-flex;align-items:center;margin-top:10px;cursor:pointer}.pickBtn:focus-within,.mediaPicker:focus-within .pickBtn{outline:2px solid var(--ink);outline-offset:2px}
 </style></head>
 <body><div class="app" id="app">
-<div id="home" class="view active"><div class="empty">Loading…</div></div><div id="world" class="view"></div><div id="trips" class="view"></div><div id="trip" class="view"></div><div id="passport" class="view"></div><div id="more" class="view"></div>
-<nav class="pillNav" aria-label="Main"><button class="on" data-view="home" onclick="showView('home')" aria-label="Home"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/></svg></button><button data-view="world" onclick="showView('world')" aria-label="World"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c3.2 3 3.2 14 0 17M12 3.5c-3.2 3-3.2 14 0 17"/></svg></button><button data-view="trips" onclick="showView('trips')" aria-label="Journeys"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2"/><circle cx="4.5" cy="12" r="1.2"/><circle cx="4.5" cy="18" r="1.2"/></svg></button><button data-view="passport" onclick="showView('passport')" aria-label="Passport"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5.5" y="3.5" width="13" height="17" rx="2.2"/><circle cx="12" cy="10.5" r="3"/><path d="M8.8 16.5h6.4"/></svg></button></nav>
+<div id="home" class="view active"><div class="empty" data-i18n="loading">Loading…</div></div><div id="world" class="view"></div><div id="trips" class="view"></div><div id="trip" class="view"></div><div id="passport" class="view"></div><div id="more" class="view"></div>
+<nav class="pillNav" aria-label="Main" data-i18n-aria="nav.main"><button class="on" data-view="home" onclick="showView('home')" aria-label="Home" data-i18n-aria="nav.home"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/></svg></button><button data-view="world" onclick="showView('world')" aria-label="World" data-i18n-aria="nav.world"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c3.2 3 3.2 14 0 17M12 3.5c-3.2 3-3.2 14 0 17"/></svg></button><button data-view="trips" onclick="showView('trips')" aria-label="Journeys" data-i18n-aria="nav.trips"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2"/><circle cx="4.5" cy="12" r="1.2"/><circle cx="4.5" cy="18" r="1.2"/></svg></button><button data-view="passport" onclick="showView('passport')" aria-label="Passport" data-i18n-aria="nav.passport"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5.5" y="3.5" width="13" height="17" rx="2.2"/><circle cx="12" cy="10.5" r="3"/><path d="M8.8 16.5h6.4"/></svg></button></nav>
 </div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
-<div id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="sheet"><div class="sheetHeader"><h2 id="modalTitle">Add a journey</h2><button class="close" onclick="closeEditor()" aria-label="Close"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><div class="form"><div class="field"><label for="fTitle">Trip title</label><input id="fTitle" placeholder="e.g. Summer in Italy" autocomplete="off"></div><div class="field"><label for="fCountry">Country</label><input id="fCountry" list="countryList" placeholder="e.g. Italy" autocomplete="off"><datalist id="countryList"></datalist></div><div class="field"><label for="fCity">City or cities</label><input id="fCity" placeholder="e.g. Rome, Florence" autocomplete="off"></div><div class="field"><label for="fStart">Start date</label><input id="fStart" type="date"></div><div class="field"><label for="fEnd">End date</label><input id="fEnd" type="date"></div><div class="field"><label for="fStory">Story</label><textarea id="fStory" placeholder="What do you remember?"></textarea></div><div class="field"><label for="fPhotos">Photos</label><div class="mediaPicker">Choose photos from your phone.<input id="fPhotos" type="file" accept="image/*" multiple><div id="uploadPreview" class="draftGrid"></div><div class="notice">Photos are resized and stored on this device only. Your own photos replace any sample artwork. Tap a photo to make it the cover; × removes it.</div></div></div><div id="formMsg" class="formMsg" role="alert"></div><div class="actions"><button class="secondary" onclick="closeEditor()">Cancel</button><button id="saveBtn" class="primary" onclick="saveEditor()">Save journey</button></div><div id="deleteWrap" class="actions" style="display:none"><button class="danger" onclick="deleteCurrent()">Delete journey</button></div></div></div></div>
-<div id="celebrate" class="celebrate" role="dialog" aria-modal="true" aria-label="New stamp collected"></div>
-<div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="Photo viewer"><img id="lbImg" src="" alt=""><button id="lbClose" class="lbBtn" onclick="closeLightbox()" aria-label="Close photo viewer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button><button id="lbPrev" class="lbBtn" onclick="lbStep(-1)" aria-label="Previous photo"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button><button id="lbNext" class="lbBtn" onclick="lbStep(1)" aria-label="Next photo"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button><div id="lbCount"></div></div>
+<div id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="sheet"><div class="sheetHeader"><h2 id="modalTitle">Add a journey</h2><button class="close" onclick="closeEditor()" aria-label="Close" data-i18n-aria="aria.close"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><div class="form"><div class="field"><label for="fTitle" data-i18n="f.title">Trip title</label><input id="fTitle" data-i18n-ph="ph.title" placeholder="e.g. Summer in Italy" autocomplete="off"></div><div class="field"><label for="fCountry" data-i18n="f.country">Country</label><input id="fCountry" list="countryList" data-i18n-ph="ph.country" placeholder="e.g. Italy" autocomplete="off"><datalist id="countryList"></datalist></div><div class="field"><label for="fCity" data-i18n="f.city">City or cities</label><input id="fCity" data-i18n-ph="ph.city" placeholder="e.g. Rome, Florence" autocomplete="off"></div><div class="field"><label for="fStart" data-i18n="f.start">Start date</label><input id="fStart" type="date"></div><div class="field"><label for="fEnd" data-i18n="f.end">End date</label><input id="fEnd" type="date"></div><div class="field"><label for="fStory" data-i18n="f.story">Story</label><textarea id="fStory" data-i18n-ph="ph.story" placeholder="What do you remember?"></textarea></div><div class="field"><label for="fPhotos" data-i18n="f.photos">Photos</label><div class="mediaPicker"><span data-i18n="f.pick">Choose photos from your phone.</span><div><label class="secondary pickBtn" for="fPhotos" data-i18n="f.choose">Choose photos</label></div><input id="fPhotos" class="srOnly" type="file" accept="image/*" multiple><div id="uploadPreview" class="draftGrid"></div><div class="notice" data-i18n="f.notice">Photos are resized and stored on this device only. Your own photos replace any sample artwork. Tap a photo to make it the cover; × removes it.</div></div></div><div id="formMsg" class="formMsg" role="alert"></div><div class="actions"><button class="secondary" onclick="closeEditor()" data-i18n="btn.cancel">Cancel</button><button id="saveBtn" class="primary" onclick="saveEditor()" data-i18n="btn.save">Save journey</button></div><div id="deleteWrap" class="actions" style="display:none"><button class="danger" onclick="deleteCurrent()" data-i18n="btn.delete">Delete journey</button></div></div></div></div>
+<div id="celebrate" class="celebrate" role="dialog" aria-modal="true" aria-label="New stamp collected" data-i18n-aria="cel.aria"></div>
+<div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="Photo viewer" data-i18n-aria="lb.aria"><img id="lbImg" src="" alt=""><button id="lbClose" class="lbBtn" onclick="closeLightbox()" aria-label="Close photo viewer" data-i18n-aria="lb.close"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button><button id="lbPrev" class="lbBtn" onclick="lbStep(-1)" aria-label="Previous photo" data-i18n-aria="lb.prev"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button><button id="lbNext" class="lbBtn" onclick="lbStep(1)" aria-label="Next photo" data-i18n-aria="lb.next"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button><div id="lbCount"></div></div>
 <input id="importFile" type="file" accept="application/json,.json" class="srOnly" tabindex="-1" aria-hidden="true">
 <script src="world-data.js"></script>
 <script>
-const APP_VERSION='0.6.0';
+const APP_VERSION='0.6.2';
 const DB_NAME='travelPokedex',LEGACY_KEY='travelPokedexTrips',PLACEHOLDER='assets/placeholder.svg';
 const MAX_PHOTOS_PER_TRIP=40;
 const $=id=>document.getElementById(id);
+
+/* ---------- Language (Danish / English) ---------- */
+const DEFAULT_LANG='da';
+let LANG=(()=>{try{const v=localStorage.getItem('tp_lang');if(v==='da'||v==='en')return v}catch(e){}return DEFAULT_LANG})();
+/* each entry: [english, danish]; a value that is itself [one, many] is pluralised by {n} */
+const I18N={
+ 'nav.main':['Main','Hovednavigation'],'nav.home':['Home','Hjem'],'nav.world':['World','Verden'],'nav.trips':['Journeys','Rejser'],'nav.passport':['Passport','Pas'],
+ 'add':['Add a journey','Tilføj en rejse'],'settings':['Backup and settings','Sikkerhedskopi og indstillinger'],
+ 'n.journey':[['journey','journeys'],['rejse','rejser']],'n.country':[['country','countries'],['land','lande']],'n.city':[['city','cities'],['by','byer']],
+ 'n.place':[['place','places'],['sted','steder']],'n.stamp':[['stamp','stamps'],['stempel','stempler']],'n.day':[['day','days'],['dag','dage']],
+ 'n.photo':[['photo','photos'],['billede','billeder']],'n.entry':[['entry','entries'],['rejse','rejser']],'n.reserved':[['reserved','reserved'],['reserveret','reserverede']],'n.upcoming':['upcoming','kommende'],
+ 'nodate':['No date','Ingen dato'],
+ 'deck.upcoming':['UPCOMING','KOMMENDE'],'deck.in':[['IN {n} DAY','IN {n} DAYS'],['OM {n} DAG','OM {n} DAGE']],'deck.aria':['Journeys','Rejser'],
+ 'home.empty':['No journeys yet.<br>Tap ＋ to add your first one.','Ingen rejser endnu.<br>Tryk på ＋ for at tilføje din første.'],
+ 'radar.tag':['NEXT STAMP AT {n}','NÆSTE STEMPEL VED {n}'],'radar.aria':['{n} of {next} countries to the next stamp. Open passport','{n} af {next} lande til næste stempel. Åbn pas'],
+ 'world.title':['World','Verden'],'world.aria':['Interactive globe. {n} countries collected: {list}. Drag or use the arrow keys to rotate.','Interaktiv globus. {n} lande samlet: {list}. Træk eller brug piletasterne for at rotere.'],
+ 'none.yet':['none yet','ingen endnu'],'globe.recentre':['Recentre the globe','Centrér globussen'],'legend.collected':['Collected','Samlet'],'legend.next':['Next trip','Næste rejse'],
+ 'next.up':['Next up · {c}','Næste · {c}'],'next.days':['days','dage'],'next.where':['Where next?','Hvor skal du hen?'],'next.add':['Add a future trip to see the route','Tilføj en fremtidig rejse for at se ruten'],'next.label':['Next up','Næste'],
+ 'm.countries':['Countries','Lande'],'m.cities':['Cities','Byer'],'m.trips':['Trips','Rejser'],'m.photos':['Photos','Billeder'],'m.days':['Days','Dage'],'m.places':['Places','Steder'],'m.entry':['Entry','Nr.'],'m.togo':['Days to go','Dage til'],
+ 'trips.title':['Journeys','Rejser'],'row.in':[['In {n} day','In {n} days'],['Om {n} dag','Om {n} dage']],'trips.filter':['Filter by year','Filtrér efter år'],'all':['All','Alle'],
+ 'trips.empty':['No journeys yet.<br>Tap ＋ to add one.','Ingen rejser endnu.<br>Tryk på ＋ for at tilføje en.'],'row.upcoming':['Upcoming','Kommende'],'row.latest':['Latest','Seneste'],
+ 'pass.title':['Passport','Pas'],'pass.slot':['empty slot','tom plads'],'pass.next':['Next stamp at {n} countries','Næste stempel ved {n} lande'],'pass.more':['{n} more to go','Endnu {n} til'],
+ 'stamp.reserved':['RESERVED','RESERVERET'],'stamp.aria':['Stamp: {name}{date}{res}','Stempel: {name}{date}{res}'],'stamp.res':[' (reserved)',' (reserveret)'],
+ 'back':['Back','Tilbage'],'edit':['Edit','Redigér'],'tab.story':['Story','Historie'],'tab.photos':['Photos','Billeder'],'tab.map':['Map','Kort'],'tab.stamp':['Stamp','Stempel'],'sections':['Sections','Sektioner'],
+ 'trip.stampshow':['Show stamp for {c}','Vis stempel for {c}'],'trip.nostory':['No story yet.','Ingen historie endnu.'],'photo.n':['PHOTO {n}','BILLEDE {n}'],'photo.open':['Open photo {n}','Åbn billede {n}'],
+ 'photos.empty':['No photos yet.<br>Tap Edit to add some.','Ingen billeder endnu.<br>Tryk på Redigér for at tilføje.'],'photo.alt':['{title} – photo {n}','{title} – billede {n}'],
+ 'map.aria':['Globe centred on {c}. Drag to rotate.','Globus centreret på {c}. Træk for at rotere.'],
+ 'stamptab.res':['Reserved for {d}. It becomes a real stamp on the day you travel.','Reserveret til {d}. Det bliver et rigtigt stempel den dag, du rejser.'],'stamptab.got':['Stamp Nº {no} · collected {d}','Stempel Nr. {no} · samlet {d}'],
+ 'more.title':['More','Mere'],'install.t':['Install the app','Installér appen'],'install.d':['Open it from your home screen and use it offline.','Åbn den fra din startskærm og brug den offline.'],'install.btn':['Install','Installér'],
+ 'install.ios':['In Safari tap Share, then “Add to Home Screen”.','I Safari: tryk på Del og derefter “Føj til hjemmeskærm”.'],
+ 'nostorage.t':['Storage unavailable','Lager ikke tilgængeligt'],'nostorage.d':['This browser is blocking local storage, so changes will be lost when you close the app.','Denne browser blokerer lokal lagring, så ændringer går tabt, når du lukker appen.'],
+ 'backup.t':['Backup','Sikkerhedskopi'],'backup.d':['Your journeys and photos live only on this device. Export a backup now and then, and before clearing browser data.','Dine rejser og billeder ligger kun på denne enhed. Eksportér en sikkerhedskopi ind imellem og før du rydder browserdata.'],
+ 'backup.export':['Export backup','Eksportér sikkerhedskopi'],'backup.import':['Import…','Importér…'],
+ 'bk.none':['Nothing to back up yet.','Intet at sikkerhedskopiere endnu.'],'bk.no':['No backup yet.','Ingen sikkerhedskopi endnu.'],'bk.last':['Last backup: {when}{extra}','Sidste sikkerhedskopi: {when}{extra}'],
+ 'when.today':['today','i dag'],'when.yesterday':['yesterday','i går'],'when.days':['{n} days ago','for {n} dage siden'],'bk.extra':[' – changes since then are not backed up.',' – ændringer siden er ikke sikkerhedskopieret.'],
+ 'storage.info':['Using {used} of about {quota} available{p}.','Bruger {used} af ca. {quota} ledigt{p}.'],'storage.p':[' · protected from automatic clean-up',' · beskyttet mod automatisk oprydning'],
+ 'lang.t':['Language','Sprog'],
+ 'toast.old':['It’s been a while since your last backup.','Det er et stykke tid siden din sidste sikkerhedskopi.'],'toast.export':['Export','Eksportér'],'toast.new':['A new version is available.','Der er en ny version tilgængelig.'],'toast.reload':['Reload','Genindlæs'],
+ 'toast.prep':['Preparing backup…','Forbereder sikkerhedskopi…'],'toast.saved':['Backup saved to your downloads.','Sikkerhedskopi gemt i dine downloads.'],'toast.fail':['Couldn’t create the backup.','Kunne ikke oprette sikkerhedskopien.'],
+ 'toast.nostore.export':['Storage is unavailable – nothing to export.','Lager er ikke tilgængeligt – intet at eksportere.'],'toast.nostore.import':['Storage is unavailable – can’t import.','Lager er ikke tilgængeligt – kan ikke importere.'],
+ 'toast.imported':['Backup imported.','Sikkerhedskopi importeret.'],'toast.importfail':['That file couldn’t be imported.','Den fil kunne ikke importeres.'],
+ 'import.confirm':[['Import {n} journey from this backup?\nJourneys that already exist here will be replaced by the backup version.','Import {n} journeys from this backup?\nJourneys that already exist here will be replaced by the backup version.'],['Importér {n} rejse fra denne sikkerhedskopi?\nRejser, der allerede findes her, erstattes af versionen fra sikkerhedskopien.','Importér {n} rejser fra denne sikkerhedskopi?\nRejser, der allerede findes her, erstattes af versionen fra sikkerhedskopien.']],
+ 'ed.add':['Add a journey','Tilføj en rejse'],'ed.edit':['Edit journey','Redigér rejse'],'ed.err.title':['Give the journey a title.','Giv rejsen en titel.'],'ed.err.country':['Add a country so it lands in your Passport.','Tilføj et land, så det havner i dit pas.'],
+ 'ed.err.dates':['The end date is before the start date.','Slutdatoen er før startdatoen.'],'ed.err.save':['Couldn’t save – the device may be out of storage. Nothing was changed.','Kunne ikke gemme – enheden er måske løbet tør for plads. Intet er ændret.'],
+ 'ed.err.del':['Couldn’t delete – please try again.','Kunne ikke slette – prøv igen.'],'ed.del.confirm':['Delete this journey and its photos?','Slet denne rejse og dens billeder?'],
+ 'ed.proc':['Processing photo {i} of {n}…','Behandler billede {i} af {n}…'],'ed.max':['A journey can hold {max} photos – added the first {n}.','En rejse kan rumme {max} billeder – tilføjede de første {n}.'],
+ 'ed.failed':[['{n} photo couldn’t be read and was skipped.','{n} photos couldn’t be read and were skipped.'],['{n} billede kunne ikke læses og blev sprunget over.','{n} billeder kunne ikke læses og blev sprunget over.']],
+ 'ed.photo.cover':['Photo {n} (cover)','Billede {n} (forside)'],'ed.photo.make':['Photo {n}: make cover','Billede {n}: gør til forside'],'ed.photo.rm':['Remove photo {n}','Fjern billede {n}'],'ed.cover':['Cover','Forside'],
+ 'cel.new':['NEW STAMP','NYT STEMPEL'],'cel.n':['{n} COUNTRIES','{n} LANDE'],'cel.more':['{n} more to {m}','{n} mere til {m}'],'cel.add':['Add photos','Tilføj billeder'],'cel.done':['Done','Færdig'],'cel.aria':['New stamp collected','Nyt stempel samlet'],
+ 'lb.aria':['Photo viewer','Billedvisning'],'lb.close':['Close photo viewer','Luk billedvisning'],'lb.prev':['Previous photo','Forrige billede'],'lb.next':['Next photo','Næste billede'],'lb.alt':['{title} – photo {i} of {n}','{title} – billede {i} af {n}'],
+ 'f.title':['Trip title','Rejsens titel'],'f.country':['Country','Land'],'f.city':['City or cities','By eller byer'],'f.start':['Start date','Startdato'],'f.end':['End date','Slutdato'],'f.story':['Story','Historie'],'f.photos':['Photos','Billeder'],
+ 'ph.title':['e.g. Summer in Italy','fx Sommer i Italien'],'ph.country':['e.g. Italy','fx Italien'],'ph.city':['e.g. Rome, Florence','fx Rom, Firenze'],'ph.story':['What do you remember?','Hvad husker du?'],
+ 'f.pick':['Choose photos from your phone.','Vælg billeder fra din telefon.'],'f.choose':['Choose photos','Vælg billeder'],'f.notice':['Photos are resized and stored on this device only. Your own photos replace any sample artwork. Tap a photo to make it the cover; × removes it.','Billeder gøres mindre og gemmes kun på denne enhed. Dine egne billeder erstatter eventuelle eksempelbilleder. Tryk på et billede for at gøre det til forsiden; × fjerner det.'],
+ 'btn.cancel':['Cancel','Annullér'],'btn.save':['Save journey','Gem rejse'],'btn.delete':['Delete journey','Slet rejse'],'aria.close':['Close','Luk'],'loading':['Loading…','Indlæser…'],'desc':['A personal archive of the places you have been.','Et personligt arkiv over de steder, du har været.']
+};
+function tr(key,v={}){
+  let e=I18N[key];if(!e)return key;
+  e=e[LANG==='da'?1:0];if(Array.isArray(e))e=e[v.n===1?0:1];
+  return e.replace(/\{(\w+)\}/g,(m,k)=>v[k]!==undefined?v[k]:m);
+}
+const PL=(n,key)=>n+' '+tr(key,{n});
+const LOCALE=()=>LANG==='da'?'da-DK':'en-GB';
+function applyStaticI18n(){
+  document.documentElement.lang=LANG;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{el.textContent=tr(el.dataset.i18n)});
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{el.placeholder=tr(el.dataset.i18nPh)});
+  document.querySelectorAll('[data-i18n-aria]').forEach(el=>{el.setAttribute('aria-label',tr(el.dataset.i18nAria))});
+  const m=document.querySelector('meta[name=description]');if(m)m.content=tr('desc');
+  const dl=$('countryList');if(dl)dl.innerHTML=[...(window.COUNTRIES||[])].map(c=>LANG==='da'?c[5]:c[0]).sort((a,b)=>a.localeCompare(b,LANG)).map(n=>`<option value="${esc(n)}"></option>`).join('');
+}
+function setLang(l){
+  if(l!=='da'&&l!=='en')return;LANG=l;try{localStorage.setItem('tp_lang',l)}catch(e){}
+  applyStaticI18n();
+  if($('modal').classList.contains('show'))$('modalTitle').textContent=tr(editingId?'ed.edit':'ed.add');
+  renderAll();route();
+}
 
 /* ---------- Seed data (only used on the very first run) ---------- */
 const defaults=[
@@ -272,16 +351,16 @@ async function markBackedUp(){
   try{const tx=db.transaction('meta','readwrite');tx.objectStore('meta').put(now,'lastBackup');await txDone(tx);meta.lastBackup=now;renderMore()}catch(e){}
 }
 function backupStatus(){
-  if(!meta.lastBackup)return meta.lastChange?'No backup yet.':'Nothing to back up yet.';
-  const d=Math.floor((Date.now()-meta.lastBackup)/864e5),when=d<1?'today':d===1?'yesterday':d+' days ago';
-  return 'Last backup: '+when+(meta.lastChange&&meta.lastChange>meta.lastBackup?' – changes since then are not backed up.':'.');
+  if(!meta.lastBackup)return meta.lastChange?tr('bk.no'):tr('bk.none');
+  const d=Math.floor((Date.now()-meta.lastBackup)/864e5),when=d<1?tr('when.today'):d===1?tr('when.yesterday'):tr('when.days',{n:d});
+  return tr('bk.last',{when,extra:meta.lastChange&&meta.lastChange>meta.lastBackup?tr('bk.extra'):'.'});
 }
 const BACKUP_REMINDER_DAYS=14;
 function checkBackupReminder(){
   if(!db||!meta.lastChange||(meta.lastBackup&&meta.lastBackup>=meta.lastChange))return; // nothing new to protect
   const base=meta.lastBackup||meta.firstChange||meta.lastChange;
   if(Date.now()-base<BACKUP_REMINDER_DAYS*864e5)return;
-  toast('It’s been a while since your last backup.',{label:'Export',ms:10000,action:()=>{showView('more');exportBackup()}});
+  toast(tr('toast.old'),{label:tr('toast.export'),ms:10000,action:()=>{showView('more');exportBackup()}});
 }
 
 async function readAll(){
@@ -366,10 +445,10 @@ async function processImage(file){
 }
 
 /* ---------- Countries (table comes from world-data.js) ---------- */
-const CBY={};(window.COUNTRIES||[]).forEach(c=>{[c[0],...(c[5]||[])].forEach(n=>{CBY[n.toLowerCase()]=c})});
+const CBY={};(window.COUNTRIES||[]).forEach(c=>{[c[0],c[5],...(c[6]||[])].forEach(n=>{if(n)CBY[n.toLowerCase()]=c})});
 function countryInfo(name){return CBY[String(name||'').trim().toLowerCase()]||null}
 function countryKey(name){const c=countryInfo(name);return c?c[0].toLowerCase():String(name||'').trim().toLowerCase()}
-function countryName(name){const c=countryInfo(name);return c?c[0]:String(name||'').trim()}
+function countryName(name){const c=countryInfo(name);return c?(LANG==='da'?c[5]:c[0]):String(name||'').trim()}
 function countryCode(name){const c=countryInfo(name);return c?c[1]:String(name||'??').replace(/[^A-Za-zÆØÅæøå]/g,'').slice(0,2).toUpperCase()||'??'}
 
 /* ---------- Formatting & stats ---------- */
@@ -377,19 +456,19 @@ const todayStr=()=>new Date().toLocaleDateString('sv-SE');
 const isUpcoming=t=>!!t.start&&t.start>todayStr();
 const visited=()=>trips.filter(t=>!isUpcoming(t));
 const pad2=n=>String(n).padStart(2,'0');
-const MON=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-function fmt(t){if(!t)return 'Dato ikke angivet';const d=new Date(t+'T12:00:00');return d.toLocaleDateString('da-DK',{day:'numeric',month:'short',year:'numeric'}).replace('.','')}
+const MONS={en:['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'],da:['JAN','FEB','MAR','APR','MAJ','JUN','JUL','AUG','SEP','OKT','NOV','DEC']};
+function fmt(dt){if(!dt)return tr('nodate');const d=new Date(dt+'T12:00:00');return d.toLocaleDateString(LOCALE(),{day:'numeric',month:'short',year:'numeric'}).replace('.','')}
 function year(t){return t?new Date(t+'T12:00:00').getFullYear():'Ukendt'}
 function dm(t){return t?t.slice(8,10)+'.'+t.slice(5,7):'--.--'}
 function rangeText(t){
   if(!t.start)return '';if(!t.end||t.end===t.start)return dayMonYear(t.start);
   const a=t.start,b=t.end;
   if(a.slice(0,7)===b.slice(0,7))return a.slice(8,10)+'–'+dayMonYear(b);
-  if(a.slice(0,4)===b.slice(0,4))return a.slice(8,10)+' '+MON[+a.slice(5,7)-1]+' – '+dayMonYear(b);
+  if(a.slice(0,4)===b.slice(0,4))return a.slice(8,10)+' '+MONS[LANG][+a.slice(5,7)-1]+' – '+dayMonYear(b);
   return dayMonYear(a)+' – '+dayMonYear(b);
 }
-function monYear(t){return t?MON[+t.slice(5,7)-1]+' '+t.slice(0,4):''}
-function dayMonYear(t){return t?t.slice(8,10)+' '+MON[+t.slice(5,7)-1]+' '+t.slice(0,4):''}
+function monYear(t){return t?MONS[LANG][+t.slice(5,7)-1]+' '+t.slice(0,4):''}
+function dayMonYear(t){return t?t.slice(8,10)+' '+MONS[LANG][+t.slice(5,7)-1]+' '+t.slice(0,4):''}
 function esc(s=''){return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
 function uniqBy(list,keyFn){const m=new Map();list.forEach(x=>{const v=String(x||'').trim(),k=keyFn(v);if(v&&!m.has(k))m.set(k,v)});return [...m.values()]}
 const uniqCI=list=>uniqBy(list,v=>v.toLowerCase());
@@ -443,13 +522,26 @@ function ico(kind,size=22){
 }
 
 /* ---------- Stamps (one per country, shape and tilt derived from the name) ---------- */
+/* Stamp inks: [ink for light pages, lighter tint for the dark celebration screen]; assigned by stamp number */
+const INKS=[['#1d3fa8','#8fa8ff'],['#a51d2a','#ff8790'],['#17692f','#78d894'],['#6b35a8','#c09bff'],['#9a3106','#ffa66b'],['#0b6379','#6fd6ee'],['#a3195b','#ff86bd'],['#7a3b12','#e8b58a']];
+const RESERVED_INK='#5b5f64';
+const inkFor=(no,light)=>INKS[((no||1)-1)%INKS.length][light?1:0];
 function hashStr(s){let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return h}
 const SF="font-family=\"'Space Grotesk',system-ui,sans-serif\"";
 function stampSvg(e,opts={}){
-  const {dashed=false,big=false,color='#0b0b0c',id='s'+e.key.replace(/[^a-z0-9]/g,'')}=opts;
+  return grainy(stampShape(e,opts),(opts.id||'s'+e.key.replace(/[^a-z0-9]/g,'')),hashStr(e.key)%97+1,opts.dashed);
+}
+function grainy(svg,id,seed,skip){
+  if(skip)return svg;
+  const flt=`<filter id="f_${id}" filterUnits="userSpaceOnUse" x="-20" y="-20" width="260" height="260"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" seed="${seed}" result="n"/><feColorMatrix in="n" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -2.2 0 0 0 2.25" result="m"/><feComposite in="SourceGraphic" in2="m" operator="in"/></filter>`;
+  return svg.replace(/(<svg[^>]*>)/,'$1'+flt+`<g filter="url(#f_${id})">`).replace('</svg>','</g></svg>');
+}
+function stampShape(e,opts={}){
+  const {dashed=false,big=false,id='s'+e.key.replace(/[^a-z0-9]/g,'')}=opts;
+  const color=opts.color||(dashed||!e.no?RESERVED_INK:inkFor(e.no));
   const h=hashStr(e.key),shape=h%3,rot=opts.rot!==undefined?opts.rot:((h>>3)%15)-7;
-  const name=e.name.toUpperCase(),date=e.trip?dayMonYear(e.trip.start):'',city=(e.city||'').toUpperCase(),no=e.no?'Nº '+String(e.no).padStart(3,'0'):'RESERVED';
-  const d=dashed?' stroke-dasharray="6 4"':'',aria=`Stamp: ${e.name}${date?', '+date:''}${dashed?' (reserved)':''}`;
+  const name=e.name.toUpperCase(),date=e.trip?dayMonYear(e.trip.start):'',city=(e.city||'').toUpperCase(),no=e.no?'Nº '+String(e.no).padStart(3,'0'):tr('stamp.reserved');
+  const d=dashed?' stroke-dasharray="6 4"':'',aria=tr('stamp.aria',{name:e.name,date:date?', '+date:'',res:dashed?tr('stamp.res'):''});
   const sty=`transform:rotate(${rot}deg);flex:none;`;
   if(shape===0){
     let arc=name+' · '+monYear(e.trip&&e.trip.start)+' · ';if(city&&(arc+city+' · ').length<=34)arc+=city+' · ';while(arc.length<24)arc+=arc;
@@ -545,7 +637,7 @@ function recenterGlobe(){globeState.centered=false;renderWorld()}
 /* ---------- Views ---------- */
 function header(isHome){
   const past=visited().sort(byStartDesc),th=past.slice(0,3).map(t=>`<img src="${esc(coverThumb(t))}" alt="">`).join(''),extra=Math.max(0,trips.length-3);
-  return `<div class="top">${isHome?'<div class="brand">Travel Pokédex</div>':`<div class="thumbs" aria-hidden="true">${th}${extra?`<span class="more">+${extra}</span>`:''}</div>`}<div class="tools"><button class="iconBtn" onclick="showView('more')" aria-label="Backup and settings">${ico('more')}</button><button class="iconBtn addBtn" onclick="openEditor()" aria-label="Add a journey">${ico('plus')}</button></div></div>`;
+  return `<div class="top">${isHome?'<div class="brand">Travel Pokédex</div>':`<div class="thumbs" aria-hidden="true">${th}${extra?`<span class="more">+${extra}</span>`:''}</div>`}<div class="tools"><button class="iconBtn" onclick="showView('more')" aria-label="${esc(tr('settings'))}">${ico('more')}</button><button class="iconBtn addBtn" onclick="openEditor()" aria-label="${esc(tr('add'))}">${ico('plus')}</button></div></div>`;
 }
 const NUM=(txt,size,cls='')=>`<span class="num ${cls}" style="font-size:${size}px">${txt}</span>`;
 
@@ -555,18 +647,18 @@ const deckTrips=()=>[...trips].sort(byStartAsc);
 function deckDefault(){const d=deckTrips();let i=-1;d.forEach((t,k)=>{if(!isUpcoming(t))i=k});return Math.max(0,i)}
 function deckCard(t,i){
   const up=isUpcoming(t),no=tripNo(t),len=t.title.length,fs=len>18?18:len>13?22:len>9?26:30;
-  const meta=up?`IN ${daysUntil(t)} DAYS`:`${days(t)} DAYS · ${pl(cityList(t).length,'PLACE','PLACES')}`;
-  return `<button class="dcard${up?' up':''}" data-i="${i}" onclick="deckTap(${i})" aria-label="${esc(t.title)}, ${esc(t.country)}, ${esc(fmt(t.start))}"><img data-src="${esc(cover(t))}" alt=""><span class="scrim"></span><span class="veil"></span><span class="no">${up?'UPCOMING':'№'+pad2(no||0)}</span><span class="txt"><span class="dt" style="font-size:${fs}px">${esc(t.title)}</span><span class="rule"></span><span class="dmeta">${esc(meta)}</span></span></button>`;
+  const dd=daysUntil(t),nd=days(t),np=cityList(t).length,meta=up?tr('deck.in',{n:dd}):`${nd} ${tr('n.day',{n:nd}).toUpperCase()} · ${PL(np,'n.place').toUpperCase()}`;
+  return `<button class="dcard${up?' up':''}" data-i="${i}" onclick="deckTap(${i})" aria-label="${esc(t.title)}, ${esc(countryName(t.country))}, ${esc(fmt(t.start))}"><img data-src="${esc(cover(t))}" alt=""><span class="scrim"></span><span class="veil"></span><span class="no">${up?tr('deck.upcoming'):'№'+pad2(no||0)}</span><span class="txt"><span class="dt" style="font-size:${fs}px">${esc(t.title)}</span><span class="rule"></span><span class="dmeta">${esc(meta)}</span></span></button>`;
 }
 function radarHtml(n,next){
   const frac=Math.min(1,n/next),C=314.16;
-  return `<button class="radar" onclick="showView('passport')" aria-label="${n} of ${next} countries to the next stamp. Open passport"><svg width="200" height="200" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="98" fill="none" stroke="#c9c9cc" stroke-width="1" opacity=".55"/><circle cx="100" cy="100" r="82" fill="none" stroke="#c9c9cc" stroke-width="1" opacity=".75"/><circle cx="100" cy="100" r="66" fill="none" stroke="#c9c9cc" stroke-width="1"/><circle cx="100" cy="100" r="50" fill="none" stroke="#d9d9dc" stroke-width="7"/><circle cx="100" cy="100" r="50" fill="none" stroke="#f5b301" stroke-width="7" stroke-linecap="round" stroke-dasharray="${(C*frac).toFixed(1)} ${C}" transform="rotate(-90 100 100)"/><circle cx="100" cy="100" r="35" fill="#0b0b0c"/><text x="100" y="101" text-anchor="middle" dominant-baseline="central" font-size="26" font-weight="500" fill="#ffffff" ${SF}>${pad2(n)}</text></svg><span class="radarTag">NEXT STAMP AT ${next}</span></button>`;
+  return `<button class="radar" onclick="showView('passport')" aria-label="${esc(tr('radar.aria',{n,next}))}"><svg width="200" height="200" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="98" fill="none" stroke="#c9c9cc" stroke-width="1" opacity=".55"/><circle cx="100" cy="100" r="82" fill="none" stroke="#c9c9cc" stroke-width="1" opacity=".75"/><circle cx="100" cy="100" r="66" fill="none" stroke="#c9c9cc" stroke-width="1"/><circle cx="100" cy="100" r="50" fill="none" stroke="#d9d9dc" stroke-width="7"/><circle cx="100" cy="100" r="50" fill="none" stroke="#f5b301" stroke-width="7" stroke-linecap="round" stroke-dasharray="${(C*frac).toFixed(1)} ${C}" transform="rotate(-90 100 100)"/><circle cx="100" cy="100" r="35" fill="#0b0b0c"/><text x="100" y="101" text-anchor="middle" dominant-baseline="central" font-size="26" font-weight="500" fill="#ffffff" ${SF}>${pad2(n)}</text></svg><span class="radarTag">${esc(tr('radar.tag',{n:next}))}</span></button>`;
 }
 function renderHome(){
   const d=deckTrips(),n=countryList().length,next=nextMilestone(n);
   if(deckIdx===null||deckIdx>=d.length)deckIdx=deckDefault();
   const up=trips.filter(isUpcoming).length;
-  $('home').innerHTML=header(true)+(d.length?`<div class="deckWrap"><div class="deck" id="deck" role="group" aria-roledescription="carousel" aria-label="Journeys" tabindex="0">${d.map(deckCard).join('')}</div></div><div class="dots" id="dots" aria-hidden="true"></div><div class="capC">${pl(visited().length,'journey','journeys')} · ${up} upcoming</div>`:`<div class="empty">No journeys yet.<br>Tap ＋ to add your first one.</div>`)+radarHtml(n,next);
+  $('home').innerHTML=header(true)+(d.length?`<div class="deckWrap"><div class="deck" id="deck" role="group" aria-roledescription="carousel" aria-label="${esc(tr('deck.aria'))}" tabindex="0">${d.map(deckCard).join('')}</div></div><div class="dots" id="dots" aria-hidden="true"></div><div class="capC">${PL(visited().length,'n.journey')} · ${up} ${tr('n.upcoming')}</div>`:`<div class="empty">${tr('home.empty')}</div>`)+radarHtml(n,next);
   updateDeck();
 }
 function updateDeck(){
@@ -593,8 +685,8 @@ $('home').addEventListener('keydown',e=>{if(!e.target.closest('#deck'))return;if
 /* World */
 function renderWorld(){
   const nx=nextTrip(),n=countryList().length;
-  const card=nx?`<div class="blackCard nextCard"><div><div class="capL">Next up · ${esc(countryName(nx.country))}</div><div class="nextTitle">${esc(nx.title)}</div><div class="capL2">${esc(fmt(nx.start))}${nx.end?' – '+esc(fmt(nx.end)):''}</div></div><div class="bigDays">${NUM(daysUntil(nx),52)}<span class="capL">days</span></div><span class="ambDot"></span></div>`:`<div class="blackCard nextCard"><div><div class="capL">Next up</div><div class="nextTitle">Where next?</div><div class="capL2">Add a future trip to see the route</div></div><button class="ambBtn" onclick="openEditor()" aria-label="Add a journey">${ico('plus')}</button></div>`;
-  $('world').innerHTML=header(false)+`<div class="head"><h1 class="h1">World</h1><div class="cap">${pl(n,'country','countries')} · ${pl(allCities().length,'city','cities')}</div></div><div class="globeBox"><canvas id="globe" data-size="324" tabindex="0" role="img" aria-label="Interactive globe. ${n} countries collected: ${esc(countryList().join(', ')||'none yet')}. Drag or use the arrow keys to rotate."></canvas><button class="iconBtn resetBtn" onclick="recenterGlobe()" aria-label="Recentre the globe">${ico('reset',20)}</button></div><div class="legend"><span><i class="lg lgv"></i>Collected</span><span><i class="lg lgu"></i>Next trip</span></div>${card}<div class="metrics3"><div>${NUM(pad2(n),44)}<div class="cap">Countries</div></div><div>${NUM(pad2(allCities().length),44)}<div class="cap">Cities</div></div><div>${NUM(pad2(visited().length),44)}<div class="cap">Trips</div></div></div>`;
+  const card=nx?`<div class="blackCard nextCard"><div><div class="capL">${esc(tr('next.up',{c:countryName(nx.country)}))}</div><div class="nextTitle">${esc(nx.title)}</div><div class="capL2">${esc(fmt(nx.start))}${nx.end?' – '+esc(fmt(nx.end)):''}</div></div><div class="bigDays">${NUM(daysUntil(nx),52)}<span class="capL">${tr('next.days')}</span></div><span class="ambDot"></span></div>`:`<div class="blackCard nextCard"><div><div class="capL">${tr('next.label')}</div><div class="nextTitle">${tr('next.where')}</div><div class="capL2">${tr('next.add')}</div></div><button class="ambBtn" onclick="openEditor()" aria-label="${esc(tr('add'))}">${ico('plus')}</button></div>`;
+  $('world').innerHTML=header(false)+`<div class="head"><h1 class="h1">${tr('world.title')}</h1><div class="cap">${PL(n,'n.country')} · ${PL(allCities().length,'n.city')}</div></div><div class="globeBox"><canvas id="globe" data-size="324" tabindex="0" role="img" aria-label="${esc(tr('world.aria',{n,list:countryList().join(', ')||tr('none.yet')}))}"></canvas><button class="iconBtn resetBtn" onclick="recenterGlobe()" aria-label="${esc(tr('globe.recentre'))}">${ico('reset',20)}</button></div><div class="legend"><span><i class="lg lgv"></i>${tr('legend.collected')}</span><span><i class="lg lgu"></i>${tr('legend.next')}</span></div>${card}<div class="metrics3"><div>${NUM(pad2(n),44)}<div class="cap">${tr('m.countries')}</div></div><div>${NUM(pad2(allCities().length),44)}<div class="cap">${tr('m.cities')}</div></div><div>${NUM(pad2(visited().length),44)}<div class="cap">${tr('m.trips')}</div></div></div>`;
   mountGlobe($('globe'));
 }
 
@@ -605,21 +697,21 @@ function renderTrips(){
   if(jYear!=='all'&&!years.includes(jYear))jYear='all';
   const list=[...trips].sort(byStartDesc).filter(t=>jYear==='all'||(t.start||'—').slice(0,4)===jYear);
   const rows=list.map(t=>{
-    const up=isUpcoming(t),sel=t.id===heroId,sub=up?`In ${daysUntil(t)} days`:pl(days(t)==='—'?0:days(t),'day','days');
-    return `<div class="jrow${sel?' sel':''}" role="button" tabindex="0" data-id="${esc(t.id)}" onclick="openTrip(this.dataset.id)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}"><div class="jl"><span class="capS">${esc(countryName(t.country))}</span><span class="jt">${esc(t.title)}</span></div><div class="jr">${NUM(dm(t.start),sel?30:26)}<span class="capS">${sub}</span></div>${up||sel?'<span class="ambDot" title="'+(up?'Upcoming':'Latest')+'"></span>':''}</div>`;
+    const up=isUpcoming(t),sel=t.id===heroId,sub=up?tr('row.in',{n:daysUntil(t)}):PL(days(t)==='—'?0:days(t),'n.day');
+    return `<div class="jrow${sel?' sel':''}" role="button" tabindex="0" data-id="${esc(t.id)}" onclick="openTrip(this.dataset.id)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}"><div class="jl"><span class="capS">${esc(countryName(t.country))}</span><span class="jt">${esc(t.title)}</span></div><div class="jr">${NUM(dm(t.start),sel?30:26)}<span class="capS">${sub}</span></div>${up||sel?'<span class="ambDot" title="'+tr(up?'row.upcoming':'row.latest')+'"></span>':''}</div>`;
   }).join('');
-  const pills=years.length>1?`<div class="pills" role="group" aria-label="Filter by year"><button class="pill${jYear==='all'?' on':''}" aria-pressed="${jYear==='all'}" onclick="setYear('all')">All</button>${years.slice(0,4).map(y=>`<button class="pill${jYear===y?' on':''}" aria-pressed="${jYear===y}" onclick="setYear('${y}')">${y}</button>`).join('')}</div>`:'';
-  $('trips').innerHTML=header(false)+`<div class="head"><h1 class="h1">Journeys</h1><div class="cap">${pl(trips.length,'entry','entries')} · ${trips.filter(isUpcoming).length} upcoming</div></div><div class="rows">${rows||'<div class="empty">No journeys yet.<br>Tap ＋ to add one.</div>'}</div>${pills}`;
+  const pills=years.length>1?`<div class="pills" role="group" aria-label="${esc(tr('trips.filter'))}"><button class="pill${jYear==='all'?' on':''}" aria-pressed="${jYear==='all'}" onclick="setYear('all')">${tr('all')}</button>${years.slice(0,4).map(y=>`<button class="pill${jYear===y?' on':''}" aria-pressed="${jYear===y}" onclick="setYear('${y}')">${y}</button>`).join('')}</div>`:'';
+  $('trips').innerHTML=header(false)+`<div class="head"><h1 class="h1">${tr('trips.title')}</h1><div class="cap">${PL(trips.length,'n.entry')} · ${trips.filter(isUpcoming).length} ${tr('n.upcoming')}</div></div><div class="rows">${rows||'<div class="empty">'+tr('trips.empty')+'</div>'}</div>${pills}`;
 }
 function setYear(y){jYear=y;renderTrips()}
 
 /* Passport */
 function renderPassport(){
   const pe=passportEntries(),n=pe.vis.length,next=nextMilestone(n),latest=pe.vis[pe.vis.length-1];
-  const stamp=(e,dashed)=>`<div class="stampWrap">${!dashed&&latest&&e.key===latest.key?'<span class="blotch"></span>':''}${stampSvg(e,{dashed,color:dashed?'#5b5f64':'#0b0b0c'})}</div>`;
-  const slot=`<div class="stampWrap"><div class="emptySlot"><span class="capS">Nº ${String(n+pe.up.length+1).padStart(3,'0')}</span><span>empty slot</span></div></div>`;
+  const stamp=(e,dashed)=>`<div class="stampWrap">${!dashed&&latest&&e.key===latest.key?'<span class="blotch"></span>':''}${stampSvg(e,{dashed})}</div>`;
+  const slot=`<div class="stampWrap"><div class="emptySlot"><span class="capS">Nº ${String(n+pe.up.length+1).padStart(3,'0')}</span><span>${tr('pass.slot')}</span></div></div>`;
   const nx=nextTrip();
-  $('passport').innerHTML=header(false)+`<div class="head row2"><div><h1 class="h1">Passport</h1><div class="cap">${pl(n,'stamp','stamps')} · ${pe.up.length} reserved</div></div><div class="ratio">${NUM(pad2(n),60)}<span class="cap">/ ${String(next).padStart(2,'0')}</span></div></div><div class="stampCard">${pe.vis.map(e=>stamp(e,false)).join('')}${pe.up.map(e=>stamp(e,true)).join('')}${slot}</div><div class="blackCard passCard"><div><div class="capL">Next stamp at ${next} countries</div><div class="nextTitle" style="font-size:18px">${next-n} more to go</div></div><div class="pbar"><div class="track"><div class="fill" style="width:${Math.min(100,n/next*100).toFixed(0)}%"></div></div><div class="capL2 right">${n} / ${next}</div></div></div>`;
+  $('passport').innerHTML=header(false)+`<div class="head row2"><div><h1 class="h1">${tr('pass.title')}</h1><div class="cap">${PL(n,'n.stamp')} · ${PL(pe.up.length,'n.reserved')}</div></div><div class="ratio">${NUM(pad2(n),60)}<span class="cap">/ ${String(next).padStart(2,'0')}</span></div></div><div class="stampCard">${pe.vis.map(e=>stamp(e,false)).join('')}${pe.up.map(e=>stamp(e,true)).join('')}${slot}</div><div class="blackCard passCard"><div><div class="capL">${esc(tr('pass.next',{n:next}))}</div><div class="nextTitle" style="font-size:18px">${esc(tr('pass.more',{n:next-n}))}</div></div><div class="pbar"><div class="track"><div class="fill" style="width:${Math.min(100,n/next*100).toFixed(0)}%"></div></div><div class="capL2 right">${n} / ${next}</div></div></div>`;
 }
 
 /* Trip detail */
@@ -627,15 +719,15 @@ let tripTabName='story';
 function renderTrip(id){
   const t=trips.find(x=>x.id===id);if(!t)return false;
   const up=isUpcoming(t),no=tripNo(t),e=passportEntries(),ent=[...e.vis,...e.up].find(x=>x.key===countryKey(t.country));
-  const photosHtml=t.photos.map((p,i)=>`<button class="ph" onclick="openLightbox('${esc(t.id)}',${i})" aria-label="Open photo ${i+1}"><img src="${esc(p.thumb)}" alt="${esc(t.title)} – photo ${i+1}" loading="lazy" decoding="async"></button>`).join('');
-  const tabs=[['story','Story'],['photos','Photos'],['map','Map'],['stamp','Stamp']];
-  const code=countryCode(t.country);
-  $('trip').innerHTML=`<div class="hero" style="background-image:url('${esc(cover(t))}')"><span class="scrim"></span><button class="ghost" style="left:16px" onclick="goBack()" aria-label="Back">${ico('back')}</button><button class="ghost edit" style="right:16px" data-id="${esc(t.id)}" onclick="openEditor(this.dataset.id)">Edit</button><div class="heroText"><div class="cap2">${esc(countryName(t.country))} · ${esc(rangeText(t))}</div><h1 class="heroTitle">${esc(t.title)}</h1><span class="rule"></span></div><button class="badge" onclick="tripTabSet('stamp')" aria-label="Show stamp for ${esc(countryName(t.country))}"><svg width="46" height="46" viewBox="0 0 120 120" aria-hidden="true" style="transform:rotate(-8deg)"><circle cx="60" cy="60" r="54" fill="none" stroke="#0b0b0c" stroke-width="5"${up?' stroke-dasharray="9 6"':''}/><circle cx="60" cy="60" r="42" fill="none" stroke="#0b0b0c" stroke-width="2"/><text x="60" y="61" text-anchor="middle" dominant-baseline="central" ${SF} font-size="34" font-weight="700" fill="#0b0b0c">${esc(code)}</text></svg></button></div>
-<div class="tabs2" role="group" aria-label="Sections">${tabs.map(([k,l])=>`<button data-tab="${k}" aria-pressed="${k===tripTabName}" class="${k===tripTabName?'on':''}" onclick="tripTabSet('${k}')">${l}</button>`).join('')}</div>
-<div class="tabBody" data-body="story"><div class="mrow"><div>${NUM(pad2(days(t)==='—'?0:days(t)),30)}<div class="cap">Days</div></div><div>${NUM(pad2(cityList(t).length),30)}<div class="cap">Places</div></div><div>${NUM(pad2(t.photos.length),30)}<div class="cap">Photos</div></div>${no?`<div>${NUM('№'+pad2(no),30)}<div class="cap">Entry</div></div>`:`<div>${NUM(daysUntil(t),30)}<div class="cap">Days to go</div></div>`}</div><p class="storyTxt">${esc(t.story||'Ingen historie endnu.')}</p><div class="chips">${cityList(t).map(c=>`<span class="chip">${esc(c)}</span>`).join('')}</div>${t.photos.slice(0,2).map((p,i)=>`<button class="pcard" onclick="openLightbox('${esc(t.id)}',${i})" aria-label="Open photo ${i+1}"><img src="${esc(p.thumb)}" alt=""><span class="scrimD"></span><span class="pc"><b>PHOTO ${pad2(i+1)}</b><span>${esc(t.title)}</span></span></button>`).join('')}</div>
-<div class="tabBody" data-body="photos" hidden>${t.photos.length?`<div class="pgrid">${photosHtml}</div>`:'<div class="empty">No photos yet.<br>Tap Edit to add some.</div>'}</div>
-<div class="tabBody" data-body="map" hidden><div class="globeBox small"><canvas id="tripGlobe" data-size="300" tabindex="0" role="img" aria-label="Globe centred on ${esc(countryName(t.country))}. Drag to rotate."></canvas></div><div class="capC">${esc(countryName(t.country))}${cityList(t).length?' · '+esc(cityList(t).slice(0,3).join(', ')):''}</div></div>
-<div class="tabBody" data-body="stamp" hidden><div class="stampBig">${ent?stampSvg({...ent,trip:ent.trip},{dashed:ent.upcoming,big:true,rot:-6,color:ent.upcoming?'#5b5f64':'#0b0b0c',id:'big'}).replace('width="140" height="140"','width="200" height="200"').replace('width="150" height="92"','width="240" height="147"').replace('width="170" height="112"','width="240" height="158"'):''}</div><p class="storyTxt center">${ent?(ent.upcoming?`Reserved for ${esc(fmt(ent.trip.start))}. It becomes a real stamp on the day you travel.`:`Stamp Nº ${String(ent.no).padStart(3,'0')} · collected ${esc(fmt(ent.trip.start))}`):''}</p></div>`;
+  const photosHtml=t.photos.map((p,i)=>`<button class="ph" onclick="openLightbox('${esc(t.id)}',${i})" aria-label="${esc(tr('photo.open',{n:i+1}))}"><img src="${esc(p.thumb)}" alt="${esc(tr('photo.alt',{title:t.title,n:i+1}))}" loading="lazy" decoding="async"></button>`).join('');
+  const tabs=[['story',tr('tab.story')],['photos',tr('tab.photos')],['map',tr('tab.map')],['stamp',tr('tab.stamp')]];
+  const code=countryCode(t.country),badgeInk=ent&&!ent.upcoming?inkFor(ent.no):RESERVED_INK;
+  $('trip').innerHTML=`<div class="hero" style="background-image:url('${esc(cover(t))}')"><span class="scrim"></span><button class="ghost" style="left:16px" onclick="goBack()" aria-label="${esc(tr('back'))}">${ico('back')}</button><button class="ghost edit" style="right:16px" data-id="${esc(t.id)}" onclick="openEditor(this.dataset.id)">${tr('edit')}</button><div class="heroText"><div class="cap2">${esc(countryName(t.country))} · ${esc(rangeText(t))}</div><h1 class="heroTitle">${esc(t.title)}</h1><span class="rule"></span></div><button class="badge" onclick="tripTabSet('stamp')" aria-label="${esc(tr('trip.stampshow',{c:countryName(t.country)}))}"><svg width="46" height="46" viewBox="0 0 120 120" aria-hidden="true" style="transform:rotate(-8deg)"><circle cx="60" cy="60" r="54" fill="none" stroke="${badgeInk}" stroke-width="5"${up?' stroke-dasharray="9 6"':''}/><circle cx="60" cy="60" r="42" fill="none" stroke="${badgeInk}" stroke-width="2"/><text x="60" y="61" text-anchor="middle" dominant-baseline="central" ${SF} font-size="34" font-weight="700" fill="${badgeInk}">${esc(code)}</text></svg></button></div>
+<div class="tabs2" role="group" aria-label="${esc(tr('sections'))}">${tabs.map(([k,l])=>`<button data-tab="${k}" aria-pressed="${k===tripTabName}" class="${k===tripTabName?'on':''}" onclick="tripTabSet('${k}')">${l}</button>`).join('')}</div>
+<div class="tabBody" data-body="story"><div class="mrow"><div>${NUM(pad2(days(t)==='—'?0:days(t)),30)}<div class="cap">${tr('m.days')}</div></div><div>${NUM(pad2(cityList(t).length),30)}<div class="cap">${tr('m.places')}</div></div><div>${NUM(pad2(t.photos.length),30)}<div class="cap">${tr('m.photos')}</div></div>${no?`<div>${NUM('№'+pad2(no),30)}<div class="cap">${tr('m.entry')}</div></div>`:`<div>${NUM(daysUntil(t),30)}<div class="cap">${tr('m.togo')}</div></div>`}</div><p class="storyTxt">${esc(t.story||tr('trip.nostory'))}</p><div class="chips">${cityList(t).map(c=>`<span class="chip">${esc(c)}</span>`).join('')}</div>${t.photos.slice(0,2).map((p,i)=>`<button class="pcard" onclick="openLightbox('${esc(t.id)}',${i})" aria-label="${esc(tr('photo.open',{n:i+1}))}"><img src="${esc(p.thumb)}" alt=""><span class="scrimD"></span><span class="pc"><b>${esc(tr('photo.n',{n:pad2(i+1)}))}</b><span>${esc(t.title)}</span></span></button>`).join('')}</div>
+<div class="tabBody" data-body="photos" hidden>${t.photos.length?`<div class="pgrid">${photosHtml}</div>`:'<div class="empty">'+tr('photos.empty')+'</div>'}</div>
+<div class="tabBody" data-body="map" hidden><div class="globeBox small"><canvas id="tripGlobe" data-size="300" tabindex="0" role="img" aria-label="${esc(tr('map.aria',{c:countryName(t.country)}))}"></canvas></div><div class="capC">${esc(countryName(t.country))}${cityList(t).length?' · '+esc(cityList(t).slice(0,3).join(', ')):''}</div></div>
+<div class="tabBody" data-body="stamp" hidden><div class="stampBig">${ent?stampSvg({...ent,trip:ent.trip},{dashed:ent.upcoming,big:true,rot:-6,id:'big'}).replace('width="140" height="140"','width="200" height="200"').replace('width="150" height="92"','width="240" height="147"').replace('width="170" height="112"','width="240" height="158"'):''}</div><p class="storyTxt center">${ent?(ent.upcoming?esc(tr('stamptab.res',{d:fmt(ent.trip.start)})):esc(tr('stamptab.got',{no:String(ent.no).padStart(3,'0'),d:fmt(ent.trip.start)}))):''}</p></div>`;
   tripTabSet(tripTabName,true);
   return true;
 }
@@ -651,13 +743,13 @@ let deferredInstall=null;
 const isStandalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 const isIOS=()=>/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 function renderMore(){
-  const install=isStandalone()?'':deferredInstall?`<div class="mcard"><div class="mi" aria-hidden="true">📲</div><div class="grow"><b>Install the app</b><div class="small">Open it from your home screen and use it offline.</div><div class="actions"><button class="secondary" onclick="installApp()">Install</button></div></div></div>`:isIOS()?`<div class="mcard"><div class="mi" aria-hidden="true">📲</div><div class="grow"><b>Install the app</b><div class="small">In Safari tap Share, then “Add to Home Screen”.</div></div></div>`:'';
-  $('more').innerHTML=header(false)+`<div class="head"><h1 class="h1">More</h1><div class="cap">Backup and settings</div></div><div class="metrics3 pad"><div>${NUM(pad2(visited().length),40)}<div class="cap">Trips</div></div><div>${NUM(pad2(countryList().length),40)}<div class="cap">Countries</div></div><div>${NUM(pad2(photoCount()),40)}<div class="cap">Photos</div></div></div><div class="mlist">${storageOK?'':'<div class="mcard"><div class="mi" aria-hidden="true">⚠️</div><div class="grow"><b>Storage unavailable</b><div class="small">This browser is blocking local storage, so changes will be lost when you close the app.</div></div></div>'}<div class="mcard"><div class="mi" aria-hidden="true">💾</div><div class="grow"><b>Backup</b><div class="small">Your journeys and photos live only on this device. Export a backup now and then, and before clearing browser data.</div><div class="small st"><b>${backupStatus()}</b></div><div class="actions"><button class="secondary" onclick="exportBackup()">Export backup</button><button class="secondary" onclick="$('importFile').click()">Import…</button></div></div></div>${install}<div class="small" id="storageInfo" style="margin:14px 4px 0"></div><div class="small" style="margin:6px 4px">Travel Pokédex v${APP_VERSION}</div></div>`;
+  const install=isStandalone()?'':deferredInstall?`<div class="mcard"><div class="mi" aria-hidden="true">📲</div><div class="grow"><b>${tr('install.t')}</b><div class="small">${tr('install.d')}</div><div class="actions"><button class="secondary" onclick="installApp()">${tr('install.btn')}</button></div></div></div>`:isIOS()?`<div class="mcard"><div class="mi" aria-hidden="true">📲</div><div class="grow"><b>${tr('install.t')}</b><div class="small">${tr('install.ios')}</div></div></div>`:'';
+  $('more').innerHTML=header(false)+`<div class="head"><h1 class="h1">${tr('more.title')}</h1><div class="cap">${tr('settings')}</div></div><div class="metrics3 pad"><div>${NUM(pad2(visited().length),40)}<div class="cap">${tr('m.trips')}</div></div><div>${NUM(pad2(countryList().length),40)}<div class="cap">${tr('m.countries')}</div></div><div>${NUM(pad2(photoCount()),40)}<div class="cap">${tr('m.photos')}</div></div></div><div class="mlist">${storageOK?'':`<div class="mcard"><div class="mi" aria-hidden="true">⚠️</div><div class="grow"><b>${tr('nostorage.t')}</b><div class="small">${tr('nostorage.d')}</div></div></div>`}<div class="mcard"><div class="mi" aria-hidden="true">💾</div><div class="grow"><b>${tr('backup.t')}</b><div class="small">${tr('backup.d')}</div><div class="small st"><b>${backupStatus()}</b></div><div class="actions"><button class="secondary" onclick="exportBackup()">${tr('backup.export')}</button><button class="secondary" onclick="$('importFile').click()">${tr('backup.import')}</button></div></div></div><div class="mcard"><div class="mi" aria-hidden="true">🌐</div><div class="grow"><b>${tr('lang.t')}</b><div class="actions"><button class="secondary" aria-pressed="${LANG==='da'}" onclick="setLang('da')">Dansk</button><button class="secondary" aria-pressed="${LANG==='en'}" onclick="setLang('en')">English</button></div></div></div>${install}<div class="small" id="storageInfo" style="margin:14px 4px 0"></div><div class="small" style="margin:6px 4px">Travel Pokédex v${APP_VERSION}</div></div>`;
   updateStorageInfo();
 }
 async function updateStorageInfo(){
   const el=$('storageInfo');if(!el||!navigator.storage||!navigator.storage.estimate)return;
-  try{const [e,p]=await Promise.all([navigator.storage.estimate(),navigator.storage.persisted?navigator.storage.persisted():false]);const mb=n=>n>=1e9?(n/1e9).toFixed(1)+' GB':Math.max(1,Math.round(n/1e6))+' MB';if($('storageInfo'))$('storageInfo').textContent=`Using ${mb(e.usage||0)} of about ${mb(e.quota||0)} available${p?' · protected from automatic clean-up':''}.`}catch(e){}
+  try{const [e,p]=await Promise.all([navigator.storage.estimate(),navigator.storage.persisted?navigator.storage.persisted():false]);const mb=n=>n>=1e9?(n/1e9).toFixed(1)+' GB':Math.max(1,Math.round(n/1e6))+' MB';if($('storageInfo'))$('storageInfo').textContent=tr('storage.info',{used:mb(e.usage||0),quota:mb(e.quota||0),p:p?tr('storage.p'):''})}catch(e){}
 }
 async function installApp(){if(!deferredInstall)return;deferredInstall.prompt();try{await deferredInstall.userChoice}catch(e){}deferredInstall=null;renderMore()}
 function renderAll(){renderHome();renderWorld();renderTrips();renderPassport();renderMore()}
@@ -688,7 +780,7 @@ function openLightbox(id,i){
   const t=trips.find(x=>x.id===id);if(!t||!t.photos.length)return;
   lb={id,i,opener:document.activeElement};const el=$('lightbox');el.classList.add('show');$('app').inert=true;lbShow();$('lbClose').focus();
 }
-function lbShow(){const t=trips.find(x=>x.id===lb.id);if(!t)return;const n=t.photos.length;lb.i=(lb.i+n)%n;$('lbImg').src=t.photos[lb.i].src;$('lbImg').alt=`${t.title} – photo ${lb.i+1} of ${n}`;$('lbCount').textContent=`${lb.i+1} / ${n}`;$('lbPrev').hidden=$('lbNext').hidden=n<2}
+function lbShow(){const t=trips.find(x=>x.id===lb.id);if(!t)return;const n=t.photos.length;lb.i=(lb.i+n)%n;$('lbImg').src=t.photos[lb.i].src;$('lbImg').alt=tr('lb.alt',{title:t.title,i:lb.i+1,n});$('lbCount').textContent=`${lb.i+1} / ${n}`;$('lbPrev').hidden=$('lbNext').hidden=n<2}
 function lbStep(d){lb.i+=d;lbShow()}
 function closeLightbox(){$('lightbox').classList.remove('show');$('app').inert=false;if(lb.opener&&lb.opener.isConnected)lb.opener.focus()}
 let lbX=null;
@@ -698,7 +790,7 @@ $('lightbox').addEventListener('pointerup',e=>{if(lbX===null)return;const dx=e.c
 /* ---------- Editor ---------- */
 function setMsg(text,info){const m=$('formMsg');m.textContent=text||'';m.classList.toggle('info',!!info)}
 function renderDraft(){
-  $('uploadPreview').innerHTML=draft.map((p,i)=>`<div class="draftItem${i===0?' cover':''}"><button type="button" class="draftImg" onclick="makeCover(${i})" aria-label="Photo ${i+1}${i===0?' (cover)':': make cover'}"><img src="${esc(p.thumb)}" alt=""></button><button type="button" class="draftRm" onclick="removeDraft(${i})" aria-label="Remove photo ${i+1}">×</button>${i===0?'<span class="coverBadge">Cover</span>':''}</div>`).join('');
+  $('uploadPreview').innerHTML=draft.map((p,i)=>`<div class="draftItem${i===0?' cover':''}"><button type="button" class="draftImg" onclick="makeCover(${i})" aria-label="${esc(tr(i===0?'ed.photo.cover':'ed.photo.make',{n:i+1}))}"><img src="${esc(p.thumb)}" alt=""></button><button type="button" class="draftRm" onclick="removeDraft(${i})" aria-label="${esc(tr('ed.photo.rm',{n:i+1}))}">×</button>${i===0?'<span class="coverBadge">'+tr('ed.cover')+'</span>':''}</div>`).join('');
 }
 function makeCover(i){if(i>0){const [p]=draft.splice(i,1);draft.unshift(p);renderDraft()}}
 function removeDraft(i){const [p]=draft.splice(i,1);if(p&&p.isNew)revokePhoto(p);renderDraft()}
@@ -707,7 +799,7 @@ function openEditor(id){
   lastFocus=document.activeElement;editingId=id;busy=0;saving=false;editSession++;
   const t=id?trips.find(x=>x.id===id):null;if(id&&!t)return;
   draft=t?t.photos.map(p=>({...p})):[];
-  $('modalTitle').textContent=id?'Edit journey':'Add a journey';
+  $('modalTitle').textContent=tr(id?'ed.edit':'ed.add');
   $('deleteWrap').style.display=id?'flex':'none';
   $('fTitle').value=t?t.title:'';$('fCountry').value=t?t.country:'';$('fCity').value=t?cityList(t).join(', '):'';
   $('fStart').value=t?t.start:'';$('fEnd').value=t?t.end:'';$('fStory').value=t?t.story:'';$('fPhotos').value='';
@@ -740,11 +832,11 @@ document.addEventListener('keydown',e=>{if(!$('lightbox').classList.contains('sh
 $('fPhotos').addEventListener('change',async e=>{
   const files=[...e.target.files];e.target.value='';if(!files.length)return;
   const sess=editSession,room=Math.max(MAX_PHOTOS_PER_TRIP-draft.length,0),batch=files.slice(0,room);
-  const note=files.length>room?`A journey can hold ${MAX_PHOTOS_PER_TRIP} photos – added the first ${room}.`:'';
+  const note=files.length>room?tr('ed.max',{max:MAX_PHOTOS_PER_TRIP,n:room}):'';
   let failed=0;busy++;$('saveBtn').disabled=true;
   for(const [i,file] of batch.entries()){
     if(sess!==editSession)return; // editor was closed/reopened meanwhile
-    setMsg(`Processing photo ${i+1} of ${batch.length}…`,true);
+    setMsg(tr('ed.proc',{i:i+1,n:batch.length}),true);
     try{
       const {blob,thumbBlob}=await processImage(file),p={id:uid('ph_'),isNew:true,blob,thumbBlob,src:URL.createObjectURL(blob),thumb:URL.createObjectURL(thumbBlob)};
       if(sess!==editSession){revokePhoto(p);return}
@@ -754,15 +846,15 @@ $('fPhotos').addEventListener('change',async e=>{
   }
   if(sess!==editSession)return;
   busy--;if(!busy)$('saveBtn').disabled=false;
-  setMsg(failed?`${failed} photo${failed>1?'s':''} couldn’t be read and ${failed>1?'were':'was'} skipped.`:note,!failed&&!!note);
+  setMsg(failed?tr('ed.failed',{n:failed}):note,!failed&&!!note);
 });
 
 async function saveEditor(){
   if(busy||saving)return;
   const title=$('fTitle').value.trim(),country=$('fCountry').value.trim(),start=$('fStart').value,end=$('fEnd').value;
-  if(!title){setMsg('Give the journey a title.');$('fTitle').focus();return}
-  if(!country){setMsg('Add a country so it lands in your Passport.');$('fCountry').focus();return}
-  if(start&&end&&end<start){setMsg('The end date is before the start date.');$('fEnd').focus();return}
+  if(!title){setMsg(tr('ed.err.title'));$('fTitle').focus();return}
+  if(!country){setMsg(tr('ed.err.country'));$('fCountry').focus();return}
+  if(start&&end&&end<start){setMsg(tr('ed.err.dates'));$('fEnd').focus();return}
   const cities=$('fCity').value.split(',').map(x=>x.trim()).filter(Boolean);
   const old=editingId?trips.find(x=>x.id===editingId):null;
   const trip=normalizeTrip({id:editingId||'trip_'+Date.now(),title,country,cities,locations:cities.length?cities.map(city=>({city,country})):[{city:'',country}],start,end,story:$('fStory').value.trim(),tags:old?old.tags:['NEW'],photos:draft.map(({id,asset,src,thumb})=>({id,asset,src,thumb}))});
@@ -771,7 +863,7 @@ async function saveEditor(){
   const added=draft.filter(p=>p.isNew);
   saving=true;$('saveBtn').disabled=true;
   try{await commitTrip(trip,added,removed.map(p=>p.id))}
-  catch(err){saving=false;$('saveBtn').disabled=false;setMsg('Couldn’t save – the device may be out of storage. Nothing was changed.');return}
+  catch(err){saving=false;$('saveBtn').disabled=false;setMsg(tr('ed.err.save'));return}
   removed.forEach(revokePhoto);
   const editing=!!editingId;
   trips=editing?trips.map(x=>x.id===trip.id?trip:x):[trip,...trips];
@@ -781,9 +873,9 @@ async function saveEditor(){
   requestPersistence();checkCelebrations();
 }
 async function deleteCurrent(){
-  if(!editingId||!confirm('Delete this journey and its photos?'))return;
+  if(!editingId||!confirm(tr('ed.del.confirm')))return;
   const t=trips.find(x=>x.id===editingId);if(!t)return;
-  try{await removeTripFromDB(t)}catch(err){setMsg('Couldn’t delete – please try again.');return}
+  try{await removeTripFromDB(t)}catch(err){setMsg(tr('ed.err.del'));return}
   t.photos.forEach(revokePhoto);trips=trips.filter(x=>x.id!==t.id);
   draft=[];deckIdx=null;renderAll();await closeEditor();showView('trips');
 }
@@ -805,7 +897,7 @@ function showCelebrate(e,count){
   celebrateEntry=e;const next=nextMilestone(count),milestone=MILESTONES.includes(count),t=e.trip;
   const hasOwn=t.photos.some(p=>p.id);
   const rings=[[90,.22],[140,.16],[190,.11],[250,.5],[310,.06]].map(([r,o],i)=>`<circle cx="195" cy="300" r="${r}" fill="none" stroke="${r===250?'#f5b301':'#ffffff'}" stroke-width="1" opacity="${o}"/>`).join('');
-  $('celebrate').innerHTML=`<svg class="cRings" width="390" height="844" viewBox="0 0 390 844" preserveAspectRatio="xMidYMin slice" aria-hidden="true">${rings}</svg><div class="cIn"><div class="cTag">${milestone?count+' COUNTRIES':'NEW STAMP'}</div><div class="cStamp">${stampSvg(e,{rot:-7,color:'#ffffff',id:'cel'}).replace('width="140" height="140"','width="190" height="190"').replace('width="150" height="92"','width="260" height="160"').replace('width="170" height="112"','width="260" height="171"')}</div><h2 class="cName">${esc(e.name)}</h2><span class="rule"></span><div class="cSub">${esc(e.city?e.city.toUpperCase()+' · ':'')}${esc(dayMonYear(t.start))}</div><div class="cRow"><div class="cNum">${NUM(pad2(count),84)}<span class="capL">${count===1?'country':'countries'}</span></div><div class="cProg"><div class="track"><div class="fill" style="width:${Math.min(100,count/next*100).toFixed(0)}%"></div></div><span class="capL">${next-count} more to ${next}</span></div></div><div class="cBtns">${hasOwn?'':'<button class="amb" id="cAdd">Add photos</button>'}<button class="outline" id="cDone">Done</button></div></div>`;
+  $('celebrate').innerHTML=`<svg class="cRings" width="390" height="844" viewBox="0 0 390 844" preserveAspectRatio="xMidYMin slice" aria-hidden="true">${rings}</svg><div class="cIn"><div class="cTag">${milestone?esc(tr('cel.n',{n:count})):tr('cel.new')}</div><div class="cStamp">${stampSvg(e,{rot:-7,color:inkFor(e.no,true),id:'cel'}).replace('width="140" height="140"','width="190" height="190"').replace('width="150" height="92"','width="260" height="160"').replace('width="170" height="112"','width="260" height="171"')}</div><h2 class="cName">${esc(e.name)}</h2><span class="rule"></span><div class="cSub">${esc(e.city?e.city.toUpperCase()+' · ':'')}${esc(dayMonYear(t.start))}</div><div class="cRow"><div class="cNum">${NUM(pad2(count),84)}<span class="capL">${tr('n.country',{n:count})}</span></div><div class="cProg"><div class="track"><div class="fill" style="width:${Math.min(100,count/next*100).toFixed(0)}%"></div></div><span class="capL">${esc(tr('cel.more',{n:next-count,m:next}))}</span></div></div><div class="cBtns">${hasOwn?'':'<button class="amb" id="cAdd">'+tr('cel.add')+'</button>'}<button class="outline" id="cDone">${tr('cel.done')}</button></div></div>`;
   $('celebrate').classList.add('show');$('app').inert=true;
   $('cDone').onclick=closeCelebrate;const a=$('cAdd');if(a)a.onclick=()=>{closeCelebrate();openEditor(t.id)};
   ($('cAdd')||$('cDone')).focus();
@@ -822,9 +914,9 @@ function toast(msg,opts={}){
 /* ---------- Backup ---------- */
 const blobToDataURL=b=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error);r.readAsDataURL(b)});
 async function exportBackup(){
-  if(!db){toast('Storage is unavailable – nothing to export.');return}
+  if(!db){toast(tr('toast.nostore.export'));return}
   try{
-    toast('Preparing backup…',{sticky:true});
+    toast(tr('toast.prep'),{sticky:true});
     const {recs,photos}=await readAll();
     const out={app:'travel-pokedex',version:1,exportedAt:new Date().toISOString(),trips:recs,photos:[]};
     for(const p of photos)out.photos.push({id:p.id,tripId:p.tripId,blob:await blobToDataURL(p.blob),thumb:await blobToDataURL(p.thumb||p.blob)});
@@ -832,12 +924,12 @@ async function exportBackup(){
     $('toast').classList.remove('show');
     if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:'Travel Pokédex backup'});await markBackedUp();return}catch(e){if(e.name==='AbortError')return}}
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
-    await markBackedUp();toast('Backup saved to your downloads.');
-  }catch(err){console.error(err);toast('Couldn’t create the backup.')}
+    await markBackedUp();toast(tr('toast.saved'));
+  }catch(err){console.error(err);toast(tr('toast.fail'))}
 }
 $('importFile').addEventListener('change',async e=>{
   const file=e.target.files[0];e.target.value='';if(!file)return;
-  if(!db){toast('Storage is unavailable – can’t import.');return}
+  if(!db){toast(tr('toast.nostore.import'));return}
   try{
     const data=JSON.parse(await file.text());
     if(!data||data.app!=='travel-pokedex'||!Array.isArray(data.trips)||!Array.isArray(data.photos))throw new Error('Not a Travel Pokédex backup');
@@ -845,15 +937,15 @@ $('importFile').addEventListener('change',async e=>{
     const rows=data.photos.filter(p=>okId(p.id)&&/^data:image\//.test(p.blob||'')).map(p=>({id:p.id,tripId:String(p.tripId||''),blob:dataURLToBlob(p.blob),thumb:dataURLToBlob(/^data:image\//.test(p.thumb||'')?p.thumb:p.blob)}));
     const recs=data.trips.filter(t=>t&&okId(t.id)).map(t=>toRecord(normalizeTrip({...t,photos:(Array.isArray(t.photos)?t.photos:[]).map(r=>r&&r.asset?{id:null,asset:r.asset}:{id:r&&r.id})})));
     if(!recs.length)throw new Error('No journeys found in this file');
-    if(!confirm(`Import ${recs.length} journey${recs.length>1?'s':''} from this backup?\nJourneys that already exist here will be replaced by the backup version.`))return;
+    if(!confirm(tr('import.confirm',{n:recs.length})))return;
     const tx=db.transaction(['trips','photos','meta'],'readwrite');
     recs.forEach(r=>tx.objectStore('trips').put(r));rows.forEach(p=>tx.objectStore('photos').put(p));
     const now=stampChange(tx);
     await txDone(tx);noteChange(now);
     await refreshFromDB();notifyOtherTabs();
     const keys=passportEntries().vis.map(x=>x.key);await setMeta('celebrated',[...new Set([...(meta.celebrated||[]),...keys])]); // imported history isn't "new"
-    toast('Backup imported.');
-  }catch(err){console.error(err);toast('That file couldn’t be imported.')}
+    toast(tr('toast.imported'));
+  }catch(err){console.error(err);toast(tr('toast.importfail'))}
 });
 
 /* ---------- Keep several tabs / the installed app in sync ---------- */
@@ -873,7 +965,7 @@ if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
   const hadController=!!navigator.serviceWorker.controller;let reloading=false;
   navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!hadController||reloading)return;reloading=true;location.reload()});
   addEventListener('load',()=>navigator.serviceWorker.register('sw.js').then(reg=>{
-    const offer=w=>toast('A new version is available.',{label:'Reload',sticky:true,action:()=>w.postMessage('SKIP_WAITING')});
+    const offer=w=>toast(tr('toast.new'),{label:tr('toast.reload'),sticky:true,action:()=>w.postMessage('SKIP_WAITING')});
     if(reg.waiting&&navigator.serviceWorker.controller)offer(reg.waiting);
     reg.addEventListener('updatefound',()=>{const w=reg.installing;if(w)w.addEventListener('statechange',()=>{if(w.state==='installed'&&navigator.serviceWorker.controller)offer(w)})});
     document.addEventListener('visibilitychange',()=>{if(!document.hidden){reg.update().catch(()=>{});checkCelebrations()}});
@@ -881,7 +973,7 @@ if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
 }else document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkCelebrations()});
 
 /* ---------- Boot ---------- */
-(function fillCountryList(){const dl=$('countryList');if(dl)dl.innerHTML=(window.COUNTRIES||[]).map(c=>`<option value="${esc(c[0])}"></option>`).join('')})();
+applyStaticI18n();
 (async function boot(){
   if(history.state&&history.state.modal)history.replaceState(null,''); // reloaded while the editor was open
   try{

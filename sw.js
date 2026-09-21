@@ -8,7 +8,7 @@
  * RELEASING: bump VERSION on every deploy. That is what makes browsers install
  * the new worker; the page then shows a "new version available" prompt.
  */
-const VERSION = '0.6.0';
+const VERSION = '0.6.2';
 const CACHE = 'travel-pokedex-' + VERSION;
 
 const SHELL = [
