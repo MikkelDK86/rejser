@@ -1,41 +1,31 @@
-# Travel Pokédex v0.5.1
+# Travel Pokédex v0.6.0 — photo-first redesign
 
-Personal travel archive, built as an installable, offline-capable PWA.
+Personal travel archive, an installable, offline-capable PWA. Data lives in IndexedDB on the device.
 
-## What changed since v0.4
-**Installable & offline**
-- Real app icons (any + maskable), `apple-touch-icon`, consistent theme colour, `id`/`scope`/`description`, and an "Add journey" home-screen shortcut.
-- `sw.js`: app shell is pre-cached and served cache-first, so the app opens instantly and works with no network.
-- Update flow: when a new version is deployed the app shows "A new version is available – Reload". Nothing is swapped mid-edit.
+## What's new in 0.6
+**New look (monochrome + one amber accent, photo-first)**
+- **Home:** a swipeable deck of your journeys (Las Vegas in front, older ones behind, upcoming trips peeking to the right) and a progress ring to your next country milestone (5, 10, 15, 20, 30, 40, 50 …).
+- **World:** an interactive dot-globe. Drag or use arrow keys to rotate. Collected countries are black, your next trip is amber, with a dotted route to it.
+- **Journeys:** big date numerals; the black row is the trip in progress (or your latest). Filter by year.
+- **Passport:** replaces Collection. One stamp per country, numbered by first visit, in a shape derived from the country. Upcoming trips reserve a dashed stamp that becomes real on the day you travel.
+- **New stamp:** collecting a new country (saving a past trip, or a reserved trip's start date arriving) plays a one-time celebration. Milestone countries get their own tag.
+- **Trip page:** photo hero, tabs (Story / Photos / Map / Stamp), and a full-screen photo viewer.
+- Rounded pill navigation with four tabs; backup and settings moved behind the “···” button.
 
-**Data safety**
-- Journeys and photos now live in **IndexedDB** instead of `localStorage`. Photos are resized (max 1600 px, plus a 480 px thumbnail) and stored as binary blobs, so a whole trip of phone photos no longer hits the ~5 MB localStorage limit.
-- Existing v0.3/v0.4 data is migrated automatically on first launch.
-- Save errors are reported instead of silently dropping the trip.
-- More → **Export backup / Import** (JSON incl. photos). Uses the share sheet where available.
-- The Backup card shows when you last exported, and the app nudges you to export if there are changes and it has been 14+ days since your last backup (`BACKUP_REMINDER_DAYS` in the script).
-- Storage is requested as "persistent" after the first save, to protect it from automatic clean-up.
-
-**Behaviour fixes**
-- Editing a journey no longer *replaces* its photos: you can add, remove and pick the cover.
-- Android/browser back button works (hash routing); Back closes the editor instead of leaving the app.
-- Upcoming trips are shown as "Upcoming" and no longer count towards visited countries/cities/trips.
-- Country/city de-duplication is case-insensitive; validation for title, country, and end-before-start.
-- Corrupt stored data can no longer blank the app.
-
-**Accessibility & polish**
-- Dialog semantics, focus handling, Escape to close, background made inert while it is open.
-- Cards are keyboard-operable; icon buttons have labels; images have `alt`; `aria-current` on the nav.
-- Muted text contrast raised from 3.6:1 to 5.2:1; very small text sizes nudged up.
-- Content-Security-Policy meta tag, `100dvh`, safe-area-aware FAB, singular/plural labels.
+**Under the hood**
+- Country names are normalised ("USA", "United States", "Tyskland" all count as one country). The editor suggests country names as you type.
+- A trip without cities now still counts its country.
+- Everything from 0.5 is unchanged: IndexedDB storage, photo downscaling, backup/import + reminder, offline service worker with update prompt.
+- New sample artwork (no baked-in text).
 
 ## Deploying
-Needs HTTPS (or `localhost`). Paths are relative, so it works from a sub-folder (e.g. GitHub Pages `/repo/`).
+Needs HTTPS (or `localhost`); paths are relative so it works from a GitHub Pages sub-folder.
+**Every release: bump `VERSION` in `sw.js`.**
 
-**Every release: bump `VERSION` in `sw.js`.** That is what makes installed copies pick up the new files.
+## Optional: the font
+See `fonts/README.txt`. Without it the app uses the system font.
 
-## Known gaps / next ideas
-- Explore and per-trip Map are still static mock-ups; Moments and Videos are placeholders; the name on Home is hard-coded.
+## Known gaps
+- The globe is built from a hand-drawn low-resolution land mask, so coastlines are approximate. Countries without a drawn outline are highlighted by a small area around their centre.
 - One country per journey in the editor (the data model already supports several).
-- No full-screen photo viewer yet.
-- No sync: data is per device/browser. Use Export/Import to move it.
+- Data is per device/browser. Use Export/Import to move it.
