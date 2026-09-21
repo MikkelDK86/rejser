@@ -1,6 +1,17 @@
-# Travel Pokédex v0.9.2 — detailed world map, subtle colours
+# Travel Pokédex v0.10.0 — data-safety release
 
 Personal travel archive, an installable, offline-capable PWA. Data lives in IndexedDB on the device.
+
+## What's new in 0.10.0 — protecting your data
+Updating the app never touches your data (trips and photos live in the browser's own storage, not in the app files), but data can still *look* lost for other reasons. This release closes those gaps:
+- **A unique storage name** (`travel-pokedex-archive`). Everything on one `github.io` address shares a single browser storage area, so another app or an older prototype using the same name could collide with (or delete) this app's data. Data from the previous name is copied across automatically on the first launch; the old copy is left untouched.
+- **No more silent “examples”.** On a genuinely empty start the app asks: *Restore a backup / Start with examples / Start empty*. If this device had data before, it says *“Your data seems to be gone”* and puts **Restore a backup** first.
+- **Failures are loud and safe.** If storage cannot be opened or read, a banner explains why, saving is switched off (so nothing can be overwritten), and **Export a backup** still works on the raw data. One unreadable record is skipped, reported, and kept in backups instead of hiding everything.
+- **Backup nudges**: a reminder after 5 unbacked changes or 7 days, and the “new version” prompt tells you to export first when you have unbacked changes.
+- **Data-protection note** under More when the browser has not made storage persistent and the app is not installed (Safari can clear a website's data after 7 days without a visit). The app also asks the browser for persistent storage at start-up once you have data.
+- Service-worker caches use a unique prefix too, so other apps on the same address cannot delete them.
+
+**Safe way to update:** upload all files (including `app.js`, `world-data.js`, `assets/`), keep using the *same web address* and the *same icon*. Do not remove and re-add the home-screen icon, and never use “Clear website data”. Export a backup from More before big changes.
 
 ## What's new in 0.9.2
 - The three numbers under the map (countries, cities, journeys) and the same row on the More page are now centred in their columns.

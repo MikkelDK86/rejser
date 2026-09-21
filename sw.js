@@ -8,8 +8,9 @@
  * RELEASING: bump VERSION on every deploy. That is what makes browsers install
  * the new worker; the page then shows a "new version available" prompt.
  */
-const VERSION = '0.9.2';
-const CACHE = 'travel-pokedex-' + VERSION;
+const VERSION = '0.10.0';
+const PREFIX = 'tpx-archive-';   // unique: other apps on the same address must not touch our caches, nor we theirs
+const CACHE = PREFIX + VERSION;
 
 const SHELL = [
   './',
@@ -43,7 +44,7 @@ self.addEventListener('activate', event => {
   event.waitUntil((async () => {
     const names = await caches.keys();
     await Promise.all(names
-      .filter(n => n.startsWith('travel-pokedex-') && n !== CACHE)
+      .filter(n => (n.startsWith(PREFIX) && n !== CACHE) || /^travel-pokedex-\d+\.\d+\.\d+$/.test(n))
       .map(n => caches.delete(n)));
     await self.clients.claim();
   })());

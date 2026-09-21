@@ -1,5 +1,7 @@
-const APP_VERSION='0.9.2';
-const DB_NAME='travelPokedex',LEGACY_KEY='travelPokedexTrips',PLACEHOLDER='assets/placeholder.svg';
+const APP_VERSION='0.10.0';
+/* Storage names. Everything on a github.io address shares one browser storage area, so ours has a unique name
+   (the previous name 'travelPokedex' is only read once, to copy old data across). */
+const DB_NAME='travel-pokedex-archive',OLD_DB_NAME='travelPokedex',LEGACY_KEY='travelPokedexTrips',PLACEHOLDER='assets/placeholder.svg';
 const MAX_PHOTOS_PER_TRIP=40;
 const $=id=>document.getElementById(id);
 
@@ -57,6 +59,20 @@ const I18N={
  'f.pick':['Choose photos from your phone.','Vælg billeder fra din telefon.'],'f.choose':['Choose photos','Vælg billeder'],'f.notice':['Photos are resized and stored on this device only. Your own photos replace any sample artwork. Tap a photo to make it the cover; × removes it.','Billeder gøres mindre og gemmes kun på denne enhed. Dine egne billeder erstatter eventuelle eksempelbilleder. Tryk på et billede for at gøre det til forsiden; × fjerner det.'],
  'btn.cancel':['Cancel','Annullér'],'btn.save':['Save journey','Gem rejse'],'btn.delete':['Delete journey','Slet rejse'],'aria.close':['Close','Luk'],'loading':['Loading…','Indlæser…'],'desc':['A personal archive of the places you have been.','Et personligt arkiv over de steder, du har været.']
 };
+Object.assign(I18N,{
+ 'welcome.title':['Welcome','Velkommen'],'welcome.body':['Your journeys and photos are stored only on this device. Start with a few examples, start empty, or restore a backup.','Dine rejser og billeder gemmes kun på denne enhed. Start med nogle eksempler, start tom, eller gendan en sikkerhedskopi.'],
+ 'lost.title':['Your data seems to be gone','Dine data ser ud til at være væk'],
+ 'lost.body':['The app has no journeys stored right now, but this device had some before. The browser may have cleared them, or the app was opened from a different place (for example the home-screen icon instead of Safari, or another web address). If you have a backup, restore it now.','Appen har ingen rejser gemt lige nu, men denne enhed havde nogle tidligere. Browseren kan have ryddet dem, eller appen er åbnet et andet sted fra (fx via ikonet på hjemmeskærmen i stedet for Safari, eller en anden webadresse). Har du en sikkerhedskopi, så gendan den nu.'],
+ 'welcome.restore':['Restore a backup','Gendan en sikkerhedskopi'],'welcome.demo':['Start with examples','Start med eksempler'],'welcome.empty':['Start empty','Start tom'],'welcome.restoring':['Restoring…','Gendanner…'],
+ 'ban.retry':['Try again','Prøv igen'],'ban.export':['Export a backup','Eksportér en sikkerhedskopi'],
+ 'ban.open':['The app could not open its storage ({why}). What you see is only an example and nothing will be saved.','Appen kunne ikke åbne sit lager ({why}). Det du ser er kun et eksempel, og intet bliver gemt.'],
+ 'ban.read':['Your saved data could not be read ({why}). It has NOT been deleted. Saving is switched off so nothing gets overwritten.','Dine gemte data kunne ikke læses ({why}). De er IKKE slettet. Gemning er slået fra, så intet bliver overskrevet.'],
+ 'ban.bad':[['{n} journey could not be read and is hidden. It is still stored – export a backup to keep it.','{n} journeys could not be read and are hidden. They are still stored – export a backup to keep them.'],['{n} rejse kunne ikke læses og er skjult. Den ligger stadig gemt – eksportér en sikkerhedskopi for at beholde den.','{n} rejser kunne ikke læses og er skjulte. De ligger stadig gemt – eksportér en sikkerhedskopi for at beholde dem.']],
+ 'ban.version':['Another app on this web address may be using the same storage name.','En anden app på denne webadresse bruger måske det samme lagernavn.'],
+ 'ed.err.locked':['Your saved data could not be loaded, so saving is switched off to protect it. See the banner at the top.','Dine gemte data kunne ikke indlæses, så gemning er slået fra for at beskytte dem. Se banneret øverst.'],
+ 'persist.title':['Data protection','Databeskyttelse'],'persist.warn':['This browser may clear the app’s data on its own (for example Safari after 7 days without a visit). Install the app on your home screen and keep your backups up to date.','Denne browser kan selv rydde appens data (fx Safari efter 7 dage uden besøg). Installér appen på hjemmeskærmen og hold dine sikkerhedskopier opdateret.'],
+ 'toast.newhint':['Tip: export a backup first.','Tip: eksportér først en sikkerhedskopi.']
+});
 function tr(key,v={}){
   let e=I18N[key];if(!e)return key;
   e=e[LANG==='da'?1:0];if(Array.isArray(e))e=e[v.n===1?0:1];
@@ -92,7 +108,9 @@ const BUNDLED_ASSET=/^assets\/[\w-]+\.svg$/;
 /* ---------- Model helpers ----------
    Runtime trip.photos = [{id, asset, src, thumb}]  (id = stored photo, asset = bundled artwork)
    Stored trip record   photos = [{id}] | [{asset}]  (blobs live in the 'photos' object store) */
-let meta={lastBackup:null,lastChange:null,firstChange:null,celebrated:null,badges:null,wishlist:[]};
+let meta={lastBackup:null,lastChange:null,firstChange:null,celebrated:null,badges:null,wishlist:[],changesSince:0};
+let dataLocked=false,badRecords=[],needSilentSync=false;
+const guardLocked=()=>{if(dataLocked)throw new Error('locked')};
 let trips=[],db=null,storageOK=true,editingId=null,draft=[],busy=0,saving=false,lastFocus=null,editSession=0,inAppNav=0;
 
 function normalizeTrip(t){
@@ -126,26 +144,26 @@ const txDone=tx=>new Promise((res,rej)=>{tx.oncomplete=()=>res();tx.onerror=()=>
 
 async function loadMeta(){
   const st=db.transaction('meta','readonly').objectStore('meta');
-  const [a,b,c,d,e,f]=await Promise.all(['lastBackup','lastChange','firstChange','celebrated','badges','wishlist'].map(k=>reqP(st.get(k))));
-  meta={lastBackup:a||null,lastChange:b||null,firstChange:c||null,celebrated:Array.isArray(d)?d:null,badges:e&&typeof e==='object'&&!Array.isArray(e)?e:null,wishlist:Array.isArray(f)?f:[]};
+  const [a,b,c,d,e,f,g]=await Promise.all(['lastBackup','lastChange','firstChange','celebrated','badges','wishlist','changesSince'].map(k=>reqP(st.get(k))));
+  meta={lastBackup:a||null,lastChange:b||null,firstChange:c||null,celebrated:Array.isArray(d)?d:null,badges:e&&typeof e==='object'&&!Array.isArray(e)?e:null,wishlist:Array.isArray(f)?f:[],changesSince:+g||0};
 }
-async function setMeta(k,v){if(!db)return;const tx=db.transaction('meta','readwrite');tx.objectStore('meta').put(v,k);await txDone(tx);meta[k]=v}
-function stampChange(tx){const now=Date.now(),st=tx.objectStore('meta');st.put(now,'lastChange');if(!meta.firstChange)st.put(now,'firstChange');return now}
-function noteChange(now){meta.lastChange=now;if(!meta.firstChange)meta.firstChange=now}
+async function setMeta(k,v){guardLocked();if(!db)return;const tx=db.transaction('meta','readwrite');tx.objectStore('meta').put(v,k);await txDone(tx);meta[k]=v}
+function stampChange(tx){const now=Date.now(),st=tx.objectStore('meta');st.put(now,'lastChange');st.put((meta.changesSince||0)+1,'changesSince');if(!meta.firstChange)st.put(now,'firstChange');return now}
+function noteChange(now){meta.lastChange=now;meta.changesSince=(meta.changesSince||0)+1;if(!meta.firstChange)meta.firstChange=now;try{localStorage.setItem('tp_had',String(now))}catch(e){}}   // tp_had lets a later launch notice that data used to exist here
 async function markBackedUp(){
   const now=Date.now();
-  try{const tx=db.transaction('meta','readwrite');tx.objectStore('meta').put(now,'lastBackup');await txDone(tx);meta.lastBackup=now;renderMore()}catch(e){}
+  try{const tx=db.transaction('meta','readwrite');tx.objectStore('meta').put(now,'lastBackup');tx.objectStore('meta').put(0,'changesSince');await txDone(tx);meta.lastBackup=now;meta.changesSince=0;renderMore()}catch(e){}
 }
 function backupStatus(){
   if(!meta.lastBackup)return meta.lastChange?tr('bk.no'):tr('bk.none');
   const d=Math.floor((Date.now()-meta.lastBackup)/864e5),when=d<1?tr('when.today'):d===1?tr('when.yesterday'):tr('when.days',{n:d});
   return tr('bk.last',{when,extra:meta.lastChange&&meta.lastChange>meta.lastBackup?tr('bk.extra'):'.'});
 }
-const BACKUP_REMINDER_DAYS=14;
+const BACKUP_REMINDER_DAYS=7,BACKUP_REMINDER_CHANGES=5;
 function checkBackupReminder(){
   if(!db||!meta.lastChange||(meta.lastBackup&&meta.lastBackup>=meta.lastChange))return; // nothing new to protect
   const base=meta.lastBackup||meta.firstChange||meta.lastChange;
-  if(Date.now()-base<BACKUP_REMINDER_DAYS*864e5)return;
+  if(Date.now()-base<BACKUP_REMINDER_DAYS*864e5&&(meta.changesSince||0)<BACKUP_REMINDER_CHANGES)return;   // remind after a week, or after 5 changes
   toast(tr('toast.old'),{label:tr('toast.export'),ms:10000,action:()=>{showView('more');exportBackup()}});
 }
 
@@ -156,10 +174,12 @@ async function readAll(){
 }
 async function loadTrips(){
   const {recs,photos}=await readAll();const byId=new Map(photos.map(p=>[p.id,p]));
-  return recs.map(r=>hydrate(r,byId));
+  badRecords=[];const out=[];
+  recs.forEach(r=>{try{out.push(hydrate(r,byId))}catch(e){badRecords.push({id:r&&r.id,err:String(e)});console.warn('Unreadable journey record kept in storage',r&&r.id,e)}});   // one bad record must never hide the rest
+  return out;
 }
 async function commitTrip(trip,addedPhotos,removedIds){
-  if(!db)return;
+  guardLocked();if(!db)return;
   const tx=db.transaction(['trips','photos','meta'],'readwrite');
   const ps=tx.objectStore('photos');
   addedPhotos.forEach(p=>ps.put({id:p.id,tripId:trip.id,blob:p.blob,thumb:p.thumbBlob}));
@@ -170,7 +190,7 @@ async function commitTrip(trip,addedPhotos,removedIds){
   noteChange(now);notifyOtherTabs();
 }
 async function removeTripFromDB(trip){
-  if(!db)return;
+  guardLocked();if(!db)return;
   const tx=db.transaction(['trips','photos','meta'],'readwrite');
   trip.photos.forEach(p=>p.id&&tx.objectStore('photos').delete(p.id));
   tx.objectStore('trips').delete(trip.id);
@@ -184,6 +204,56 @@ function dataURLToBlob(u){
   const i=u.indexOf(','),head=u.slice(0,i),mime=(/^data:([^;,]+)/.exec(head)||[])[1]||'image/jpeg';
   const bin=atob(u.slice(i+1)),arr=new Uint8Array(bin.length);for(let k=0;k<bin.length;k++)arr[k]=bin.charCodeAt(k);
   return new Blob([arr],{type:mime});
+}
+/* ---------- copy data from the previous storage name, or ask what to do on a genuinely empty start ---------- */
+async function findOldDb(){
+  try{if(indexedDB.databases){const l=await indexedDB.databases();if(!l.some(d=>d.name===OLD_DB_NAME))return null}}catch(e){}
+  return new Promise(res=>{
+    let fresh=false;const r=indexedDB.open(OLD_DB_NAME);
+    r.onupgradeneeded=()=>{fresh=true;try{r.transaction.abort()}catch(e){}};   // it did not exist: do not create it
+    r.onsuccess=()=>{if(fresh){r.result.close();res(null)}else res(r.result)};
+    r.onerror=()=>res(null);r.onblocked=()=>res(null);
+  });
+}
+let foundOldData=false;   // old storage exists and holds journeys (used to word the message if copying ever fails)
+async function migrateOldDb(){
+  let old=null;
+  try{
+    old=await findOldDb();if(!old)return false;
+    if(!['trips','photos','meta'].every(n=>old.objectStoreNames.contains(n))){old.close();return false}
+    const tx=old.transaction(['trips','photos','meta'],'readonly'),ms=tx.objectStore('meta');
+    const [recs,photos,keys,vals]=await Promise.all([reqP(tx.objectStore('trips').getAll()),reqP(tx.objectStore('photos').getAll()),reqP(ms.getAllKeys()),reqP(ms.getAll())]);
+    old.close();
+    const good=recs.filter(r=>r&&typeof r.id==='string'&&typeof r.title==='string');
+    if(!good.length)return false;
+    foundOldData=true;
+    const w=db.transaction(['trips','photos','meta'],'readwrite');
+    good.forEach(r=>w.objectStore('trips').put(r));
+    photos.filter(p=>p&&typeof p.id==='string'&&p.blob).forEach(p=>w.objectStore('photos').put(p));
+    keys.forEach((k,i)=>{if(typeof k==='string')w.objectStore('meta').put(vals[i],k)});
+    w.objectStore('meta').put(true,'seeded');w.objectStore('meta').put(OLD_DB_NAME,'migratedFrom');
+    await txDone(w);                                   // the old database is left untouched as an extra copy
+    try{localStorage.setItem('tp_had',String(Date.now()))}catch(e){}
+    return true;
+  }catch(e){console.warn('Could not copy data from the old storage name',e);try{old&&old.close()}catch(_){}return false}
+}
+function askFirstRun(lost){
+  if(localStorage.getItem('tp_autodemo')==='1')return Promise.resolve('demo');
+  return new Promise(resolve=>{
+    const el=$('welcome');
+    el.innerHTML=`<div class="cIn wIn"><h2 id="wTitle" class="wTitle">${esc(tr(lost?'lost.title':'welcome.title'))}</h2><p class="wBody">${esc(tr(lost?'lost.body':'welcome.body'))}</p><div class="cBtns"><button class="amb" id="wRestore">${esc(tr('welcome.restore'))}</button>${lost?'':`<button class="outline" id="wDemo">${esc(tr('welcome.demo'))}</button>`}<button class="outline" id="wEmpty">${esc(tr('welcome.empty'))}</button></div><div id="wMsg" class="wMsg" role="alert"></div></div>`;
+    el.classList.add('show');
+    const done=v=>{el.classList.remove('show');resolve(v)};
+    $('wRestore').onclick=()=>$('welcomeFile').click();
+    $('wEmpty').onclick=()=>done('empty');
+    if($('wDemo'))$('wDemo').onclick=()=>done('demo');
+    $('welcomeFile').onchange=async e=>{
+      const f=e.target.files[0];e.target.value='';if(!f)return;$('wMsg').textContent=tr('welcome.restoring');
+      try{const data=JSON.parse(await f.text());await importBackup(data);await setMeta('seeded',true);needSilentSync=true;done('restored')}
+      catch(err){console.error(err);$('wMsg').textContent=tr('toast.importfail')}
+    };
+    $('wRestore').focus();
+  });
 }
 async function initData(){
   const meta=(mode)=>db.transaction('meta',mode).objectStore('meta');
@@ -203,7 +273,10 @@ async function initData(){
       records.push(toRecord({...t,photos:refs.map(r=>r.id?{id:r.id}:{id:null,asset:r.asset})}));
     }
   }else{
-    defaults.forEach(d=>records.push(toRecord(normalizeTrip({...d,photos:d.photos.map(a=>({id:null,asset:a}))}))));
+    if(await migrateOldDb())return;                                    // data from the previous storage name
+    const choice=await askFirstRun(!!localStorage.getItem('tp_had')||foundOldData);    // never silently replace what might be lost data with examples
+    if(choice==='restored')return;
+    if(choice==='demo')defaults.forEach(d=>records.push(toRecord(normalizeTrip({...d,photos:d.photos.map(a=>({id:null,asset:a}))}))));
   }
   const tx=db.transaction(['trips','photos','meta'],'readwrite');
   records.forEach(r=>tx.objectStore('trips').put(r));
@@ -211,6 +284,7 @@ async function initData(){
   tx.objectStore('meta').put(true,'seeded');
   if(legacy&&records.length){const now=Date.now();tx.objectStore('meta').put(now,'lastChange');tx.objectStore('meta').put(now,'firstChange')}
   await txDone(tx);
+  if(legacy&&records.length)try{localStorage.setItem('tp_had',String(Date.now()))}catch(e){}
   if(legacy)try{localStorage.removeItem(LEGACY_KEY)}catch(e){}
 }
 
@@ -510,12 +584,14 @@ const isStandalone=()=>matchMedia('(display-mode: standalone)').matches||navigat
 const isIOS=()=>/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 function renderMore(){
   const install=isStandalone()?'':deferredInstall?`<div class="mcard"><div class="mi" aria-hidden="true">📲</div><div class="grow"><b>${tr('install.t')}</b><div class="small">${tr('install.d')}</div><div class="actions"><button class="secondary" onclick="installApp()">${tr('install.btn')}</button></div></div></div>`:isIOS()?`<div class="mcard"><div class="mi" aria-hidden="true">📲</div><div class="grow"><b>${tr('install.t')}</b><div class="small">${tr('install.ios')}</div></div></div>`:'';
-  $('more').innerHTML=header(false)+`<div class="head"><h1 class="h1">${tr('more.title')}</h1><div class="cap">${tr('settings')}</div></div><div class="metrics3 pad"><div>${NUM(pad2(visited().length),40)}<div class="cap">${tr('m.trips')}</div></div><div>${NUM(pad2(countryList().length),40)}<div class="cap">${tr('m.countries')}</div></div><div>${NUM(pad2(photoCount()),40)}<div class="cap">${tr('m.photos')}</div></div></div><div class="mlist">${storageOK?'':`<div class="mcard"><div class="mi" aria-hidden="true">⚠️</div><div class="grow"><b>${tr('nostorage.t')}</b><div class="small">${tr('nostorage.d')}</div></div></div>`}<div class="mcard"><div class="mi" aria-hidden="true">💾</div><div class="grow"><b>${tr('backup.t')}</b><div class="small">${tr('backup.d')}</div><div class="small st"><b>${backupStatus()}</b></div><div class="actions"><button class="secondary" onclick="exportBackup()">${tr('backup.export')}</button><button class="secondary" onclick="$('importFile').click()">${tr('backup.import')}</button></div></div></div><div class="mcard"><div class="mi" aria-hidden="true">🌐</div><div class="grow"><b>${tr('lang.t')}</b><div class="actions"><button class="secondary" aria-pressed="${LANG==='da'}" onclick="setLang('da')">Dansk</button><button class="secondary" aria-pressed="${LANG==='en'}" onclick="setLang('en')">English</button></div></div></div>${mapPaletteCard()}${install}<div class="small" id="storageInfo" style="margin:14px 4px 0"></div><div class="small" style="margin:6px 4px">Travel Pokédex v${APP_VERSION}</div></div>`;
+  $('more').innerHTML=header(false)+`<div class="head"><h1 class="h1">${tr('more.title')}</h1><div class="cap">${tr('settings')}</div></div><div class="metrics3 pad"><div>${NUM(pad2(visited().length),40)}<div class="cap">${tr('m.trips')}</div></div><div>${NUM(pad2(countryList().length),40)}<div class="cap">${tr('m.countries')}</div></div><div>${NUM(pad2(photoCount()),40)}<div class="cap">${tr('m.photos')}</div></div></div><div class="mlist">${storageOK?'':`<div class="mcard"><div class="mi" aria-hidden="true">⚠️</div><div class="grow"><b>${tr('nostorage.t')}</b><div class="small">${tr('nostorage.d')}</div></div></div>`}<div class="mcard"><div class="mi" aria-hidden="true">💾</div><div class="grow"><b>${tr('backup.t')}</b><div class="small">${tr('backup.d')}</div><div class="small st"><b>${backupStatus()}</b></div><div class="actions"><button class="secondary" onclick="exportBackup()">${tr('backup.export')}</button><button class="secondary" onclick="$('importFile').click()">${tr('backup.import')}</button></div></div></div><div class="mcard"><div class="mi" aria-hidden="true">🌐</div><div class="grow"><b>${tr('lang.t')}</b><div class="actions"><button class="secondary" aria-pressed="${LANG==='da'}" onclick="setLang('da')">Dansk</button><button class="secondary" aria-pressed="${LANG==='en'}" onclick="setLang('en')">English</button></div></div></div>${mapPaletteCard()}${install}<div id="persistNote"></div><div class="small" id="storageInfo" style="margin:14px 4px 0"></div><div class="small" style="margin:6px 4px">Travel Pokédex v${APP_VERSION}</div></div>`;
   updateStorageInfo();
 }
 async function updateStorageInfo(){
+  let p=false;try{if(navigator.storage&&navigator.storage.persisted)p=await navigator.storage.persisted()}catch(e){}
+  const pn=$('persistNote');if(pn)pn.innerHTML=(!p&&!isStandalone())?`<div class="mcard"><div class="mi" aria-hidden="true">🛡️</div><div class="grow"><b>${esc(tr('persist.title'))}</b><div class="small">${esc(tr('persist.warn'))}</div></div></div>`:'';
   const el=$('storageInfo');if(!el||!navigator.storage||!navigator.storage.estimate)return;
-  try{const [e,p]=await Promise.all([navigator.storage.estimate(),navigator.storage.persisted?navigator.storage.persisted():false]);const mb=n=>n>=1e9?(n/1e9).toFixed(1)+' GB':Math.max(1,Math.round(n/1e6))+' MB';if($('storageInfo'))$('storageInfo').textContent=tr('storage.info',{used:mb(e.usage||0),quota:mb(e.quota||0),p:p?tr('storage.p'):''})}catch(e){}
+  try{const e=await navigator.storage.estimate();const mb=n=>n>=1e9?(n/1e9).toFixed(1)+' GB':Math.max(1,Math.round(n/1e6))+' MB';if($('storageInfo'))$('storageInfo').textContent=tr('storage.info',{used:mb(e.usage||0),quota:mb(e.quota||0),p:p?tr('storage.p'):''})}catch(e){}
 }
 async function installApp(){if(!deferredInstall)return;deferredInstall.prompt();try{await deferredInstall.userChoice}catch(e){}deferredInstall=null;renderMore()}
 function renderAll(){renderHome();renderWorld();renderTrips();renderPassport();renderMore()}
@@ -633,7 +709,7 @@ async function saveEditor(){
   const added=draft.filter(p=>p.isNew);
   saving=true;$('saveBtn').disabled=true;
   try{await commitTrip(trip,added,removed.map(p=>p.id))}
-  catch(err){saving=false;$('saveBtn').disabled=false;setMsg(tr('ed.err.save'));return}
+  catch(err){saving=false;$('saveBtn').disabled=false;setMsg(tr(err&&err.message==='locked'?'ed.err.locked':'ed.err.save'));return}
   removed.forEach(revokePhoto);
   const editing=!!editingId;
   trips=editing?trips.map(x=>x.id===trip.id?trip:x):[trip,...trips];
@@ -645,7 +721,7 @@ async function saveEditor(){
 async function deleteCurrent(){
   if(!editingId||!confirm(tr('ed.del.confirm')))return;
   const t=trips.find(x=>x.id===editingId);if(!t)return;
-  try{await removeTripFromDB(t)}catch(err){setMsg(tr('ed.err.del'));return}
+  try{await removeTripFromDB(t)}catch(err){setMsg(tr(err&&err.message==='locked'?'ed.err.locked':'ed.err.del'));return}
   t.photos.forEach(revokePhoto);trips=trips.filter(x=>x.id!==t.id);
   draft=[];deckIdx=null;renderAll();await closeEditor();showView('trips');
 }
@@ -665,6 +741,13 @@ function showCelebrate(e,count){
   ($('cAdd')||$('cDone')).focus();
 }
 function closeCelebrate(){$('celebrate').classList.remove('show');$('app').inert=false;setTimeout(pumpCelebrations,250)}
+
+/* ---------- Banner (storage problems) ---------- */
+function showBanner(text,actions){
+  const b=$('banner');b.innerHTML=`<span class="bTxt">${esc(text)}</span>${(actions||[]).map((a,i)=>`<button data-i="${i}">${esc(a.label)}</button>`).join('')}`;b.hidden=false;
+  b.querySelectorAll('button').forEach(btn=>{btn.onclick=()=>actions[+btn.dataset.i].fn()});
+}
+function hideBanner(){const b=$('banner');b.hidden=true;b.innerHTML=''}
 
 /* ---------- Toast ---------- */
 function toast(msg,opts={}){
@@ -689,30 +772,40 @@ async function exportBackup(){
     await markBackedUp();toast(tr('toast.saved'));
   }catch(err){console.error(err);toast(tr('toast.fail'))}
 }
+function parseBackup(data){
+  if(!data||data.app!=='travel-pokedex'||!Array.isArray(data.trips)||!Array.isArray(data.photos))throw new Error('Not a Travel Pokédex backup');
+  const okId=s=>typeof s==='string'&&/^[\w-]{1,80}$/.test(s);
+  const rows=data.photos.filter(p=>okId(p.id)&&/^data:image\//.test(p.blob||'')).map(p=>({id:p.id,tripId:String(p.tripId||''),blob:dataURLToBlob(p.blob),thumb:dataURLToBlob(/^data:image\//.test(p.thumb||'')?p.thumb:p.blob)}));
+  const recs=data.trips.filter(t=>t&&okId(t.id)).map(t=>toRecord(normalizeTrip({...t,photos:(Array.isArray(t.photos)?t.photos:[]).map(r=>r&&r.asset?{id:null,asset:r.asset}:{id:r&&r.id})})));
+  if(!recs.length)throw new Error('No journeys found in this file');
+  const okw=w=>w&&(w.type==='country'||w.type==='city')&&typeof w.country==='string'&&okId(w.id);
+  const incoming=(Array.isArray(data.wishlist)?data.wishlist:[]).filter(okw).map(w=>({id:w.id,type:w.type,country:String(w.country).slice(0,80),city:String(w.city||'').slice(0,80),added:String(w.added||'').slice(0,10),done:w.done?String(w.done).slice(0,10):null}));
+  return {recs,rows,incoming,badges:data.badges&&typeof data.badges==='object'?data.badges:null};
+}
+async function importBackup(data){                       // writes only; the caller refreshes the screen
+  guardLocked();
+  const {recs,rows,incoming,badges}=parseBackup(data);
+  const tx=db.transaction(['trips','photos','meta'],'readwrite');
+  recs.forEach(r=>tx.objectStore('trips').put(r));rows.forEach(p=>tx.objectStore('photos').put(p));
+  const now=stampChange(tx);
+  await txDone(tx);noteChange(now);
+  if(incoming.length)await saveMetaStamped('wishlist',[...wishlist().filter(h=>!incoming.some(i=>i.id===h.id)),...incoming]);
+  if(badges){const bd={...(meta.badges||{})};Object.entries(badges).forEach(([k,v])=>{if(BADGE_BY_ID[k]&&v&&typeof v.at==='string'&&(!bd[k]||v.at<bd[k].at))bd[k]={at:v.at.slice(0,10)}});await setMeta('badges',bd)}
+  return recs.length;
+}
 $('importFile').addEventListener('change',async e=>{
   const file=e.target.files[0];e.target.value='';if(!file)return;
   if(!db){toast(tr('toast.nostore.import'));return}
   try{
     const data=JSON.parse(await file.text());
-    if(!data||data.app!=='travel-pokedex'||!Array.isArray(data.trips)||!Array.isArray(data.photos))throw new Error('Not a Travel Pokédex backup');
-    const okId=s=>typeof s==='string'&&/^[\w-]{1,80}$/.test(s);
-    const rows=data.photos.filter(p=>okId(p.id)&&/^data:image\//.test(p.blob||'')).map(p=>({id:p.id,tripId:String(p.tripId||''),blob:dataURLToBlob(p.blob),thumb:dataURLToBlob(/^data:image\//.test(p.thumb||'')?p.thumb:p.blob)}));
-    const recs=data.trips.filter(t=>t&&okId(t.id)).map(t=>toRecord(normalizeTrip({...t,photos:(Array.isArray(t.photos)?t.photos:[]).map(r=>r&&r.asset?{id:null,asset:r.asset}:{id:r&&r.id})})));
-    if(!recs.length)throw new Error('No journeys found in this file');
-    if(!confirm(tr('import.confirm',{n:recs.length})))return;
-    const tx=db.transaction(['trips','photos','meta'],'readwrite');
-    recs.forEach(r=>tx.objectStore('trips').put(r));rows.forEach(p=>tx.objectStore('photos').put(p));
-    const now=stampChange(tx);
-    await txDone(tx);noteChange(now);
+    const n=parseBackup(data).recs.length;
+    if(!confirm(tr('import.confirm',{n})))return;
+    await importBackup(data);
     await refreshFromDB();notifyOtherTabs();
     const keys=passportEntries().vis.map(x=>x.key);await setMeta('celebrated',[...new Set([...(meta.celebrated||[]),...keys])]); // imported history isn't "new"
-    const okw=w=>w&&(w.type==='country'||w.type==='city')&&typeof w.country==='string'&&okId(w.id);
-    const incoming=(Array.isArray(data.wishlist)?data.wishlist:[]).filter(okw).map(w=>({id:w.id,type:w.type,country:String(w.country).slice(0,80),city:String(w.city||'').slice(0,80),added:String(w.added||'').slice(0,10),done:w.done?String(w.done).slice(0,10):null}));
-    if(incoming.length)await saveMetaStamped('wishlist',[...wishlist().filter(h=>!incoming.some(i=>i.id===h.id)),...incoming]);
-    if(data.badges&&typeof data.badges==='object'){const bd={...(meta.badges||{})};Object.entries(data.badges).forEach(([k,v])=>{if(BADGE_BY_ID[k]&&v&&typeof v.at==='string'&&(!bd[k]||v.at<bd[k].at))bd[k]={at:v.at.slice(0,10)}});await setMeta('badges',bd)}
     await silentSync();renderPassport();
     toast(tr('toast.imported'));
-  }catch(err){console.error(err);toast(tr('toast.importfail'))}
+  }catch(err){console.error(err);toast(err&&err.message==='locked'?tr('ed.err.locked'):tr('toast.importfail'))}
 });
 
 /* ---------- Keep several tabs / the installed app in sync ---------- */
@@ -734,7 +827,7 @@ if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
   const hadController=!!navigator.serviceWorker.controller;let reloading=false;
   navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!hadController||reloading)return;reloading=true;location.reload()});
   addEventListener('load',()=>navigator.serviceWorker.register('sw.js').then(reg=>{
-    const offer=w=>toast(tr('toast.new'),{label:tr('toast.reload'),sticky:true,action:()=>w.postMessage('SKIP_WAITING')});
+    const offer=w=>toast(tr('toast.new')+((meta.lastChange&&(!meta.lastBackup||meta.lastBackup<meta.lastChange))?' '+tr('toast.newhint'):''),{label:tr('toast.reload'),sticky:true,action:()=>w.postMessage('SKIP_WAITING')});
     if(reg.waiting&&navigator.serviceWorker.controller)offer(reg.waiting);
     reg.addEventListener('updatefound',()=>{const w=reg.installing;if(w)w.addEventListener('statechange',()=>{if(w.state==='installed'&&navigator.serviceWorker.controller)offer(w)})});
     document.addEventListener('visibilitychange',()=>{if(!document.hidden){reg.update().catch(()=>{});checkCelebrations()}});
@@ -887,7 +980,7 @@ function wishStatus(w){
 }
 const wishName=w=>w.type==='city'?`${w.city}, ${countryName(w.country)}`:countryName(w.country);
 async function saveMetaStamped(k,v){
-  meta[k]=v;if(!db)return;
+  guardLocked();meta[k]=v;if(!db)return;
   const tx=db.transaction('meta','readwrite');tx.objectStore('meta').put(v,k);const now=stampChange(tx);
   await txDone(tx);noteChange(now);notifyOtherTabs();
 }
@@ -899,7 +992,7 @@ function gameExtras(){
 /* ---------- checking for new stamps / badges / fulfilled wishes ---------- */
 let celebQueue=[],gamBusy=false;
 async function checkGamification(){
-  if(!db||gamBusy)return;gamBusy=true;
+  if(!db||gamBusy||dataLocked)return;gamBusy=true;
   try{
     let stampEv=null,wishEv=null,badgeEv=null;const pe=entriesFrom(trips),now=pe.vis.map(e=>e.key);
     // 1) new stamps (first launch after installing this version: just remember what you already have)
@@ -1672,16 +1765,29 @@ function tripZoom(f){if(tripView)tripView.zoomBy(f)}
 applyStaticI18n();
 (async function boot(){
   if(history.state&&history.state.modal)history.replaceState(null,''); // reloaded while the editor was open
+  let phase='open',failure=null;
   try{
-    db=await openDB();await initData();await loadMeta();trips=await loadTrips();
+    db=await openDB();phase='init';await loadMeta();await initData();await loadMeta();phase='load';trips=await loadTrips();
   }catch(err){
-    console.error('Storage failed, running in memory only',err);
-    db=null;storageOK=false;
+    console.error('Storage problem ('+phase+')',err);
+    failure={phase,name:(err&&err.name)||'Error',msg:String((err&&err.message)||err)};
+    storageOK=false;dataLocked=true;                       // never write while we could not read: nothing may be overwritten
+    if(phase==='open')db=null;
     trips=defaults.map(d=>normalizeTrip({...d,photos:d.photos.map(a=>({id:null,asset:a,src:a,thumb:a}))}));
+  }
+  if(!failure&&needSilentSync){
+    try{const keys=passportEntries().vis.map(x=>x.key);await setMeta('celebrated',[...new Set([...(meta.celebrated||[]),...keys])]);await silentSync()}catch(e){console.warn(e)}
+  }
+  if(failure){
+    const why=failure.name+(failure.name==='VersionError'?' – '+tr('ban.version'):'');
+    showBanner(tr(failure.phase==='open'?'ban.open':'ban.read',{why}),failure.phase==='open'?[{label:tr('ban.retry'),fn:()=>location.reload()}]:[{label:tr('ban.retry'),fn:()=>location.reload()},{label:tr('ban.export'),fn:()=>exportBackup()}]);
+  }else if(badRecords.length){
+    showBanner(tr('ban.bad',{n:badRecords.length}),[{label:tr('ban.export'),fn:()=>exportBackup()}]);
   }
   renderAll();
   route();
   loadWorld();
   checkBackupReminder();
   checkCelebrations();
+  if(db&&!dataLocked&&meta.lastChange&&navigator.storage&&navigator.storage.persisted)navigator.storage.persisted().then(p=>{if(!p)requestPersistence()}).catch(()=>{});
 })();
