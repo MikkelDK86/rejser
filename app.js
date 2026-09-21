@@ -1,4 +1,4 @@
-const APP_VERSION='0.10.1';
+const APP_VERSION='0.11.0';
 /* Storage names. Everything on a github.io address shares one browser storage area, so ours has a unique name
    (the previous name 'travelPokedex' is only read once, to copy old data across). */
 const DB_NAME='travel-pokedex-archive',OLD_DB_NAME='travelPokedex',LEGACY_KEY='travelPokedexTrips',PLACEHOLDER='assets/placeholder.svg';
@@ -566,7 +566,7 @@ function renderTrip(id){
 <div class="tabs2" role="group" aria-label="${esc(tr('sections'))}">${tabs.map(([k,l])=>`<button data-tab="${k}" aria-pressed="${k===tripTabName}" class="${k===tripTabName?'on':''}" onclick="tripTabSet('${k}')">${l}</button>`).join('')}</div>
 <div class="tabBody" data-body="story"><div class="mrow"><div>${NUM(pad2(days(t)==='—'?0:days(t)),30)}<div class="cap">${tr('m.days')}</div></div><div>${NUM(pad2(cityList(t).length),30)}<div class="cap">${tr('m.places')}</div></div><div>${NUM(pad2(t.photos.length),30)}<div class="cap">${tr('m.photos')}</div></div>${no?`<div>${NUM('№'+pad2(no),30)}<div class="cap">${tr('m.entry')}</div></div>`:`<div>${NUM(daysUntil(t),30)}<div class="cap">${tr('m.togo')}</div></div>`}</div><p class="storyTxt">${esc(t.story||tr('trip.nostory'))}</p><div class="chips">${(t.locations||[]).filter(l=>l.city).map(l=>`<button class="chip link" data-ck="${esc(countryKey(l.country))}" data-c="${esc(cityKey(l.city))}" onclick="openCity(this.dataset.ck,this.dataset.c)">${esc(l.city)}</button>`).join('')}</div>${memoryCard(t)}${t.photos.slice(0,2).map((p,i)=>`<button class="pcard" onclick="openLightbox('${esc(t.id)}',${i})" aria-label="${esc(tr('photo.open',{n:i+1}))}"><img src="${esc(p.thumb)}" alt=""><span class="scrimD"></span><span class="pc"><b>${esc(tr('photo.n',{n:pad2(i+1)}))}</b><span>${esc(t.title)}</span></span></button>`).join('')}</div>
 <div class="tabBody" data-body="photos" hidden>${t.photos.length?`<div class="pgrid">${photosHtml}</div>`:'<div class="empty">'+tr('photos.empty')+'</div>'}</div>
-<div class="tabBody" data-body="map" hidden><div class="mapBox small" id="tripMapBox"></div><div class="capC">${esc(countryName(t.country))}${cityList(t).length?' · '+esc(cityList(t).slice(0,3).join(', ')):''}</div></div>
+<div class="tabBody" data-body="map" hidden><div class="mapBox small" id="tripMapBox"></div><div id="tripMapInfo"></div><div class="capC">${esc(countryName(t.country))}${cityList(t).length?' · '+esc(cityList(t).slice(0,3).join(', ')):''}</div></div>
 <div class="tabBody" data-body="stamp" hidden><div class="stampBig">${ent?stampSvg({...ent,trip:ent.trip},{dashed:ent.upcoming,big:true,rot:-6,id:'big'}).replace('width="140" height="140"','width="200" height="200"').replace('width="150" height="92"','width="240" height="147"').replace('width="170" height="112"','width="240" height="158"'):''}</div><p class="storyTxt center">${ent?(ent.upcoming?esc(tr('stamptab.res',{d:fmt(ent.trip.start)})):esc(tr('stamptab.got',{no:String(ent.no).padStart(3,'0'),d:fmt(ent.trip.start)}))):''}</p></div>`;
   tripTabSet(tripTabName,true);
   return true;
@@ -703,7 +703,9 @@ async function saveEditor(){
   if(start&&end&&end<start){setMsg(tr('ed.err.dates'));$('fEnd').focus();return}
   const cities=$('fCity').value.split(',').map(x=>x.trim()).filter(Boolean);
   const old=editingId?trips.find(x=>x.id===editingId):null;
-  const trip=normalizeTrip({id:editingId||'trip_'+Date.now(),title,country,cities,locations:cities.length?cities.map(city=>({city,country})):[{city:'',country}],start,end,story:$('fStory').value.trim(),tags:old?old.tags:['NEW'],photos:draft.map(({id,asset,src,thumb})=>({id,asset,src,thumb}))});
+  // pins you placed by hand survive edits (matched by city name, only while the country is unchanged)
+  const keepPins=new Map(old&&countryKey(old.country)===countryKey(country)?(old.locations||[]).filter(l=>l.city&&typeof l.lat==='number'&&typeof l.lon==='number').map(l=>[cityKey(l.city),l]):[]);
+  const trip=normalizeTrip({id:editingId||'trip_'+Date.now(),title,country,cities,locations:cities.length?cities.map(city=>{const pl=keepPins.get(cityKey(city));return pl?{city,country,lat:pl.lat,lon:pl.lon}:{city,country}}):[{city:'',country}],start,end,story:$('fStory').value.trim(),tags:old?old.tags:['NEW'],photos:draft.map(({id,asset,src,thumb})=>({id,asset,src,thumb}))});
   const keep=new Set(draft.map(p=>p.id).filter(Boolean));
   const removed=old?old.photos.filter(p=>p.id&&!keep.has(p.id)):[];
   const added=draft.filter(p=>p.isNew);
@@ -902,7 +904,7 @@ function entriesFrom(list){
 const season=m=>m===12||m<=2?'w':m<=5?'sp':m<=8?'su':'a';
 function memChecks(t){
   const own=t.photos.filter(p=>p.id).length;
-  return [{k:'cover',ok:own>=1},{k:'photos',ok:own>=3},{k:'story',ok:(t.story||'').trim().length>=20},{k:'places',ok:cityList(t).length>=1},{k:'dates',ok:!!t.start&&!!t.end}];
+  return [{k:'cover',ok:own>=1},{k:'photos',ok:own>=3},{k:'story',ok:(t.story||'').trim().length>=1},{k:'places',ok:cityList(t).length>=1},{k:'dates',ok:!!t.start&&!!t.end}];
 }
 const memScore=t=>memChecks(t).filter(c=>c.ok).length;
 function gameStats(list){
@@ -955,7 +957,7 @@ const BADGES=[
  one('week','trips','calendar','A week away','En uge væk','Take a journey of 7 days or more','Tag på en rejse på 7 dage eller mere',S=>S.maxDays>=7,S=>[Math.min(S.maxDays,7),7]),
  one('month','trips','calendar','A month away','En hel måned','Take a journey of 28 days or more','Tag på en rejse på 28 dage eller mere',S=>S.maxDays>=28,S=>[Math.min(S.maxDays,28),28]),
  one('regular','trips','repeat','Regular','Stamgæst','Visit the same country on 3 different journeys','Besøg det samme land på 3 forskellige rejser',S=>S.maxSame>=3,S=>[Math.min(S.maxSame,3),3]),
- one('storyteller','memory','chat','Storyteller','Fortæller','Write a story for 5 journeys','Skriv en historie til 5 rejser',S=>S.stories>=5,S=>[Math.min(S.stories,5),5]),
+ one('storyteller','memory','chat','Storyteller','Fortæller','Write a story of at least 20 characters for 5 journeys','Skriv en historie på mindst 20 tegn til 5 rejser',S=>S.stories>=5,S=>[Math.min(S.stories,5),5]),
  one('curator','memory','star','Curator','Kurator','Complete the memory checklist on 3 journeys','Fuldfør erindrings-tjeklisten på 3 rejser',S=>S.complete>=3,S=>[Math.min(S.complete,3),3]),
  one('dreamer','wish','heart','Dreamer','Drømmer','Put 5 places on your wishlist','Sæt 5 steder på din ønskeliste',(S,X)=>X.wishTotal>=5,(S,X)=>[Math.min(X.wishTotal,5),5],true),
  one('wish1','wish','check','Wish come true','Ønske opfyldt','Visit a place from your wishlist','Besøg et sted fra din ønskeliste',(S,X)=>X.wishDone>=1,(S,X)=>[Math.min(X.wishDone,1),1],true),
@@ -1330,6 +1332,12 @@ $('fCountry').addEventListener('input',renderCitySug);
    labels, city pins, tap a country
    ===================================================================== */
 Object.assign(I18N,{
+ 'pin.first':['First place','Første sted'],'pin.other':['Other places','Øvrige steder'],'pin.title':['Places on the map','Steder på kortet'],
+ 'pin.auto':['Pinned automatically','Placeret automatisk'],'pin.user':['Placed by you','Placeret af dig'],'pin.none':['No pin yet','Ingen pin endnu'],
+ 'pin.place':['Place on map','Placér på kortet'],'pin.move':['Move','Flyt'],'pin.remove':['Remove pin','Fjern pin'],'pin.cancel':['Cancel','Annullér'],
+ 'pin.hint':['Tap the map where {n} is','Tryk på kortet, hvor {n} er'],'pin.saved':['Pin saved','Pin gemt'],
+ 'pin.aria':['Map of {c} with {n} pinned places. Drag to move, pinch to zoom.','Kort over {c} med {n} pins. Træk for at flytte, knib for at zoome.'],
+ 'pin.explain':['Well-known cities are pinned automatically. For other places, tap “Place on map” and then tap the spot.','Kendte byer får automatisk en pin. For andre steder: tryk “Placér på kortet” og derefter på stedet.'],
  'pal.title':['Map colours','Kortfarver'],
  'map.loading':['Loading the map…','Indlæser kortet…'],'map.zoomin':['Zoom in','Zoom ind'],'map.zoomout':['Zoom out','Zoom ud'],'map.fit':['Show my places','Vis mine steder'],
  'map.mode':['Map view','Kortvisning'],'map.flat':['Map','Kort'],'map.globe':['Globe','Globus'],
@@ -1345,14 +1353,14 @@ Object.assign(I18N,{
 const CITY_LL={};CITY_TABLE.forEach(([en])=>{const ll=(window.CITY_LL_EN||{})[en];if(ll)CITY_LL[normCity(en)]=ll});
 const RAD=Math.PI/180;
 const MAP_PALETTES={
- mist:{en:'Mist',da:'Tåge',ocean:'#d6e4ec',land:'#f3eee5',border:'#d3cab9',edge:'#f3eee5',visited:'#4b7c82',visitedDark:'#245055',upcoming:'#e3a94b',upcomingDark:'#8a5f10',wish:'#e6dfd0',dash:'#4b7c82',selected:'#c9711b',muted:'#5f6870',halo:'#fbf8f3',limb:'#b3c4cf'},
- sage:{en:'Sage',da:'Salvie',ocean:'#d8e7de',land:'#f3f0e7',border:'#cdc9b4',edge:'#f3f0e7',visited:'#5b8769',visitedDark:'#2b5540',upcoming:'#e0a548',upcomingDark:'#845a0e',wish:'#e6e2d2',dash:'#5b8769',selected:'#c9711b',muted:'#5f675f',halo:'#fbf9f4',limb:'#b4c7ba'},
- dusk:{en:'Dusk',da:'Skumring',ocean:'#dddcea',land:'#f4f0eb',border:'#d2cac8',edge:'#f4f0eb',visited:'#7364a2',visitedDark:'#41346c',upcoming:'#e5a15a',upcomingDark:'#86500f',wish:'#e9e2dc',dash:'#7364a2',selected:'#c9711b',muted:'#66656f',halo:'#fbf9f7',limb:'#c0bfd2'},
- mono:{en:'Black & white',da:'Sort/hvid',ocean:'#f4f4f6',land:'#cfd1d6',border:'#f4f4f6',edge:'#f4f4f6',visited:'#0b0b0c',visitedDark:'#0b0b0c',upcoming:'#f5b301',upcomingDark:'#7a5a00',wish:'#e2e3e7',dash:'#0b0b0c',selected:'#f5b301',muted:'#6d7075',halo:'#f4f4f6',limb:'#c5c7cc'}
+ mist:{en:'Mist',da:'Tåge',ocean:'#d6e4ec',land:'#f3eee5',border:'#d3cab9',edge:'#f3eee5',visited:'#4b7c82',visitedDark:'#245055',upcoming:'#e3a94b',upcomingDark:'#8a5f10',wish:'#e6dfd0',dash:'#4b7c82',selected:'#c9711b',muted:'#5f6870',halo:'#fbf8f3',limb:'#b3c4cf',pinMain:'#c2542d',pinOther:'#245055'},
+ sage:{en:'Sage',da:'Salvie',ocean:'#d8e7de',land:'#f3f0e7',border:'#cdc9b4',edge:'#f3f0e7',visited:'#5b8769',visitedDark:'#2b5540',upcoming:'#e0a548',upcomingDark:'#845a0e',wish:'#e6e2d2',dash:'#5b8769',selected:'#c9711b',muted:'#5f675f',halo:'#fbf9f4',limb:'#b4c7ba',pinMain:'#c2542d',pinOther:'#2b5540'},
+ dusk:{en:'Dusk',da:'Skumring',ocean:'#dddcea',land:'#f4f0eb',border:'#d2cac8',edge:'#f4f0eb',visited:'#7364a2',visitedDark:'#41346c',upcoming:'#e5a15a',upcomingDark:'#86500f',wish:'#e9e2dc',dash:'#7364a2',selected:'#c9711b',muted:'#66656f',halo:'#fbf9f7',limb:'#c0bfd2',pinMain:'#c2542d',pinOther:'#41346c'},
+ mono:{en:'Black & white',da:'Sort/hvid',ocean:'#f4f4f6',land:'#cfd1d6',border:'#f4f4f6',edge:'#f4f4f6',visited:'#0b0b0c',visitedDark:'#0b0b0c',upcoming:'#f5b301',upcomingDark:'#7a5a00',wish:'#e2e3e7',dash:'#0b0b0c',selected:'#f5b301',muted:'#6d7075',halo:'#f4f4f6',limb:'#c5c7cc',pinMain:'#f5b301',pinOther:'#0b0b0c'}
 };
 let MAP_PAL_ID=(()=>{try{const v=localStorage.getItem('tp_map_pal');if(MAP_PALETTES[v])return v}catch(e){}return 'mist'})();
 let MAPC=Object.assign({},MAP_PALETTES[MAP_PAL_ID]);
-function applyMapCss(){const r=document.documentElement.style;r.setProperty('--mapocean',MAPC.ocean);r.setProperty('--mapv',MAPC.visited);r.setProperty('--mapu',MAPC.upcoming);r.setProperty('--mapud',MAPC.upcomingDark)}
+function applyMapCss(){const r=document.documentElement.style;r.setProperty('--mapocean',MAPC.ocean);r.setProperty('--pinmain',MAPC.pinMain);r.setProperty('--pinother',MAPC.pinOther);r.setProperty('--mapv',MAPC.visited);r.setProperty('--mapu',MAPC.upcoming);r.setProperty('--mapud',MAPC.upcomingDark)}
 applyMapCss();
 function setMapPalette(id){
   if(!MAP_PALETTES[id])return;MAP_PAL_ID=id;MAPC=Object.assign({},MAP_PALETTES[id]);try{localStorage.setItem('tp_map_pal',id)}catch(e){}
@@ -1362,6 +1370,7 @@ function mapPaletteCard(){
   const sw=id=>{const q=MAP_PALETTES[id];return `<button class="palBtn" aria-pressed="${MAP_PAL_ID===id}" onclick="setMapPalette('${id}')" aria-label="${esc(LANG==='da'?q.da:q.en)}"><span class="palSw"><i style="background:${q.ocean}"></i><i style="background:${q.land}"></i><i style="background:${q.visited}"></i><i style="background:${q.upcoming}"></i></span><span class="palN">${esc(LANG==='da'?q.da:q.en)}</span></button>`};
   return `<div class="mcard"><div class="mi" aria-hidden="true">🗺️</div><div class="grow"><b>${esc(tr('pal.title'))}</b><div class="palRow" role="group" aria-label="${esc(tr('pal.title'))}">${Object.keys(MAP_PALETTES).map(sw).join('')}</div></div></div>`;
 }
+function mixHex(a,b,t){const p=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));const x=p(a),y=p(b);return '#'+x.map((v,i)=>Math.round(v*t+y[i]*(1-t)).toString(16).padStart(2,'0')).join('')}
 const mercY=lat=>{lat=Math.max(-85.0511,Math.min(85.0511,lat));const r=lat*RAD;return .5-Math.log(Math.tan(Math.PI/4+r/2))/(2*Math.PI)};
 const lonX=lon=>(lon+180)/360;
 const WM={ready:false,failed:false,loading:null,feats:[],byKey:new Map(),waiters:[]};
@@ -1433,11 +1442,22 @@ function mapStatus(){
 function mapPins(only){
   const out=[],idx=new Map();
   (only?[only]:trips).forEach(t=>(t.locations||[]).forEach(l=>{
-    if(!l.city)return;const ck=cityKey(l.city),ll=CITY_LL[ck];if(!ll)return;
-    const up=isUpcoming(t),ex=idx.get(ck);
+    if(!l.city)return;const ck=cityKey(l.city),own=typeof l.lat==='number'&&typeof l.lon==='number',ll=own?[l.lat,l.lon]:CITY_LL[ck];if(!ll)return;
+    const id=own?countryKey(l.country)+'|'+ck:ck,up=isUpcoming(t),ex=idx.get(id);
     if(ex){if(!up)ex.up=false;return}
-    const p={id:ck,name:cityDisplay(l.city),lat:ll[0],lon:ll[1],up,country:countryKey(l.country)};idx.set(ck,p);out.push(p);
+    const p={id,name:cityDisplay(l.city),lat:ll[0],lon:ll[1],up,country:countryKey(l.country)};idx.set(id,p);out.push(p);
   }));
+  return out;
+}
+/* every place of ONE trip, in the order it was entered; the first one is the primary place */
+function hasLL(l){return typeof l.lat==='number'&&typeof l.lon==='number'}
+function tripPins(t){
+  const out=[],seen=new Set();
+  (t.locations||[]).forEach((l,i)=>{
+    if(!l.city)return;const ck=cityKey(l.city);if(seen.has(ck))return;seen.add(ck);
+    let ll=null,src='none';if(hasLL(l)){ll=[l.lat,l.lon];src='user'}else if(CITY_LL[ck]){ll=CITY_LL[ck];src='known'}
+    out.push({idx:i,id:ck,name:cityDisplay(l.city),typed:l.city,lat:ll?ll[0]:null,lon:ll?ll[1]:null,src,primary:out.length===0});
+  });
   return out;
 }
 function pointInRing(ll,lon,lat){let c=false;const n=ll.length/2;for(let i=0,j=n-1;i<n;j=i++){const xi=ll[2*i],yi=ll[2*i+1],xj=ll[2*j],yj=ll[2*j+1];if((yi>lat)!==(yj>lat)&&lon<(xj-xi)*(lat-yi)/(yj-yi)+xi)c=!c}return c}
@@ -1462,7 +1482,7 @@ function featureAt(lon0,lat){
 /* ---------- the view ---------- */
 class MapView{
   constructor(cv,o){
-    this.cv=cv;this.o=Object.assign({globe:true,focus:null,only:null,state:null,onPick:null},o||{});
+    this.cv=cv;this.o=Object.assign({globe:true,focus:null,trip:null,state:null,onPick:null,onPlace:null},o||{});this.placing=null;
     this.st=this.o.state||{mode:'flat',cx:.5,cy:.5,k:0,lon0:0,lat0:20,z:1,init:false};
     this.ptrs=new Map();this.raf=0;this.sel=null;this.destroyed=false;
     this.measure();this.attach();this.refresh();
@@ -1474,7 +1494,7 @@ class MapView{
   }
   destroy(){this.destroyed=true;if(this.ro)this.ro.disconnect();cancelAnimationFrame(this.raf)}
   refresh(){
-    this.status=mapStatus();this.pins=mapPins(this.o.only);
+    this.status=mapStatus();this.pins=this.o.trip?tripPins(this.o.trip).filter(p=>p.lat!==null):mapPins();
     if(!this.st.init){this.fit(true);this.st.init=true}
     this.clamp();this.request();
   }
@@ -1485,7 +1505,11 @@ class MapView{
     const st=this.st,keys=[...this.status.keys()].filter(k=>this.status.get(k).s!=='w'),boxes=[];
     if(this.o.focus){(WM.byKey.get(this.o.focus)||[]).forEach(f=>boxes.push(f.mainN))}
     else keys.forEach(k=>(WM.byKey.get(k)||[]).forEach(f=>boxes.push(f.mainN)));
-    if(this.o.only||this.o.focus)this.pins.forEach(p=>boxes.push([lonX(p.lon),mercY(p.lat),lonX(p.lon),mercY(p.lat)]));
+    if(this.o.trip&&this.pins.length){        // frame the pins of the trip, with some surrounding context
+      const xs=this.pins.map(p=>lonX(p.lon)),ys=this.pins.map(p=>mercY(p.lat)),x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
+      st.k=Math.max(this.W*2.5,Math.min(this.W*40,Math.min(this.W/(Math.max(x1-x0,1e-4)*1.5),this.H/(Math.max(y1-y0,1e-4)*1.5))));
+      st.cx=(x0+x1)/2;st.cy=(y0+y1)/2;return;
+    }
     if(!boxes.length){st.k=this.kmin;st.cx=.5;st.cy=.5;st.lon0=-20;st.lat0=25;st.z=1;return}
     const x0=Math.min(...boxes.map(b=>b[0])),y0=Math.min(...boxes.map(b=>b[1])),x1=Math.max(...boxes.map(b=>b[2])),y1=Math.max(...boxes.map(b=>b[3]));
     const bw=Math.max(x1-x0,1e-4),bh=Math.max(y1-y0,1e-4),pad=this.o.focus?1.5:1.35;
@@ -1572,6 +1596,7 @@ class MapView{
   tap(x,y){
     const ll=this.lonLatAt(x,y);if(!ll)return;
     let lon=ll[0];if(lon>180)lon-=360;if(lon<-180)lon+=360;
+    if(this.placing&&this.o.onPlace){const p=this.placing;this.o.onPlace(p,ll[1],lon);return}
     const f=featureAt(lon,ll[1]);this.sel=f;this.request();
     if(f&&this.o.onPick)this.o.onPick(f,this);
   }
@@ -1580,7 +1605,10 @@ class MapView{
     if(this.st.mode==='flat')this.drawFlat();else this.drawGlobe();
   }
   fontFor(px,w){return `${w||600} ${px}px 'Space Grotesk',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif`}
-  fillFor(s){return s==='v'?MAPC.visited:s==='u'?MAPC.upcoming:MAPC.land}
+  fillFor(s){
+    if(this.o.trip)return s==='v'?mixHex(MAPC.visited,MAPC.land,.24):s==='u'?mixHex(MAPC.upcoming,MAPC.land,.4):s==='w'?MAPC.wish:MAPC.land;   // a light tint, so the pins stay clearly visible
+    return s==='v'?MAPC.visited:s==='u'?MAPC.upcoming:s==='w'?MAPC.wish:MAPC.land;
+  }
   drawFlat(){
     const {ctx,W,H,dpr,st}=this,k=st.k;
     ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle=MAPC.ocean;ctx.fillRect(0,0,W,H);
@@ -1651,6 +1679,16 @@ class MapView{
       ctx.lineWidth=3.2;ctx.strokeStyle=MAPC.halo;ctx.globalAlpha=Math.min(ctx.globalAlpha,1);ctx.lineJoin='round';ctx.strokeText(s,bx,y);ctx.fillStyle=col;ctx.fillText(s,bx,y);return true;
     };
     const drawPins=()=>{
+    if(this.o.trip){
+      const order=[...this.pins].sort((a,b)=>(b.primary?1:0)-(a.primary?1:0));   // the primary label is placed first so it always wins
+      const pts=[];order.forEach(c=>{const p=project([c.lon,c.lat]);if(p)pts.push([c,p])});
+      pts.forEach(([c,p])=>text(c.name,p.x+(c.primary?12:10),p.y-(c.primary?10:8),c.primary?13:12,c.primary?MAPC.pinMain:MAPC.pinOther,700,false));
+      pts.slice().reverse().forEach(([c,p])=>{const r=c.primary?9:7,col=c.primary?MAPC.pinMain:MAPC.pinOther,cy=p.y-r*1.75;
+        ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x-r*.78,cy+r*.55);ctx.arc(p.x,cy,r,Math.PI*.78,Math.PI*.22,false);ctx.closePath();
+        ctx.fillStyle=col;ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#fff';ctx.stroke();
+        ctx.beginPath();ctx.arc(p.x,cy,r*.38,0,7);ctx.fillStyle='#fff';ctx.fill()});
+      return;
+    }
     if(scale>=2.2){
       for(const c of this.pins){
         const p=project([c.lon,c.lat]);if(!p)continue;
@@ -1659,7 +1697,7 @@ class MapView{
       }
     }
     };
-    const cityFirst=scale>=4.2;
+    const cityFirst=scale>=4.2||!!this.o.trip;
     if(cityFirst)drawPins();
     // statuses: name + marker for tiny countries
     const done=new Set();
@@ -1747,19 +1785,49 @@ async function mapAddWish(country){
 }
 
 /* ---------- map on a trip's page ---------- */
-let tripView=null;
+let tripView=null,tripCtx=null;
+function renderTripPlaces(){
+  const box=$('tripMapInfo');if(!box||!tripCtx)return;
+  const t=tripCtx.t,pins=tripPins(t);
+  if(!pins.length){box.innerHTML='';return}
+  const rows=pins.map(p=>{
+    const status=p.src==='user'?tr('pin.user'):p.src==='known'?tr('pin.auto'):tr('pin.none');
+    const btn=`<button class="pBtn" data-i="${p.idx}" onclick="tripPlace(+this.dataset.i)">${esc(tr(p.src==='none'?'pin.place':'pin.move'))}</button>`;
+    const rm=p.src==='user'?`<button class="pBtn ghost" data-i="${p.idx}" onclick="tripPinRemove(+this.dataset.i)" aria-label="${esc(tr('pin.remove')+': '+p.name)}">${esc(tr('pin.remove'))}</button>`:'';
+    return `<div class="pRow"><span class="pinDot${p.primary?' main':''}" aria-hidden="true"></span><div class="pTxt"><b>${esc(p.name)}</b><span>${p.primary?esc(tr('pin.first'))+' · ':''}${esc(status)}</span></div>${btn}${rm}</div>`;
+  }).join('');
+  box.innerHTML=`<div class="tripLegend"><span><i class="pinDot main"></i>${esc(tr('pin.first'))}</span><span><i class="pinDot"></i>${esc(tr('pin.other'))}</span></div><div class="pList">${rows}</div><div class="small pNote">${esc(tr('pin.explain'))}</div>`;
+}
 function mountTripMap(t,focusKey){
   const box=$('tripMapBox');if(!box)return;
   if(tripView){tripView.destroy();tripView=null}
-  box.innerHTML='';
+  tripCtx={t,focusKey};box.innerHTML='';
   const make=()=>{
     if(WM.failed){box.innerHTML=`<canvas id="tripGlobe" data-size="300" tabindex="0" role="img" aria-label="${esc(tr('map.aria.small',{c:countryName(t.country)}))}"></canvas>`;const c=$('tripGlobe');mountGlobe(c,{state:{lon0:0,lat0:20,centered:true},focus:t.country,noRoute:true});return}
-    box.innerHTML=`<canvas class="mapCv" id="tripMap" tabindex="0" role="img" aria-label="${esc(tr('map.aria.small',{c:countryName(t.country)}))}"></canvas><div class="mapCtl"><button onclick="tripZoom(1.6)" aria-label="${esc(tr('map.zoomin'))}">${ico('plus',20)}</button><button onclick="tripZoom(1/1.6)" aria-label="${esc(tr('map.zoomout'))}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button></div>`;
-    tripView=new MapView($('tripMap'),{globe:false,focus:focusKey,only:t,state:{mode:'flat',cx:.5,cy:.5,k:0,lon0:0,lat0:20,z:1,init:false}});
+    const n=tripPins(t).filter(p=>p.lat!==null).length;
+    box.innerHTML=`<canvas class="mapCv" id="tripMap" tabindex="0" role="img" aria-label="${esc(tr('pin.aria',{c:countryName(t.country),n}))}"></canvas><div class="mapCtl"><button onclick="tripZoom(1.6)" aria-label="${esc(tr('map.zoomin'))}">${ico('plus',20)}</button><button onclick="tripZoom(1/1.6)" aria-label="${esc(tr('map.zoomout'))}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button></div><div class="mapHint" id="tripHint" hidden></div>`;
+    tripView=new MapView($('tripMap'),{globe:false,focus:focusKey,trip:t,onPlace:(p,lat,lon)=>saveTripPin(p.idx,lat,lon),state:{mode:'flat',cx:.5,cy:.5,k:0,lon0:0,lat0:20,z:1,init:false}});
+    renderTripPlaces();
   };
   if(WM.ready||WM.failed)make();else{box.innerHTML=`<div class="mapLoad">${esc(tr('map.loading'))}</div>`;whenWorld(make)}
 }
 function tripZoom(f){if(tripView)tripView.zoomBy(f)}
+function tripPlace(idx){
+  if(!tripView||!tripCtx)return;const l=(tripCtx.t.locations||[])[idx];if(!l)return;
+  tripView.placing={idx,name:cityDisplay(l.city)};
+  const h=$('tripHint');if(h){h.hidden=false;h.innerHTML=`<span>${esc(tr('pin.hint',{n:cityDisplay(l.city)}))}</span><button onclick="tripPlaceCancel()">${esc(tr('pin.cancel'))}</button>`}
+  $('tripMap').style.cursor='crosshair';
+}
+function tripPlaceCancel(){if(tripView)tripView.placing=null;const h=$('tripHint');if(h){h.hidden=true;h.innerHTML=''}const c=$('tripMap');if(c)c.style.cursor=''}
+async function saveTripPin(idx,lat,lon){
+  if(!tripCtx)return;const t=tripCtx.t,loc=(t.locations||[])[idx];if(!loc)return;
+  const prev={lat:loc.lat,lon:loc.lon};
+  if(lat===null){delete loc.lat;delete loc.lon}else{loc.lat=Math.round(lat*1e5)/1e5;loc.lon=Math.round(lon*1e5)/1e5}
+  try{await commitTrip(t,[],[])}
+  catch(e){if(prev.lat===undefined){delete loc.lat;delete loc.lon}else{loc.lat=prev.lat;loc.lon=prev.lon}toast(tr(e&&e.message==='locked'?'ed.err.locked':'ed.err.save'));return}
+  tripPlaceCancel();if(tripView)tripView.refresh();renderTripPlaces();if(lat!==null)toast(tr('pin.saved'));
+}
+function tripPinRemove(idx){saveTripPin(idx,null,null)}
 
 /* ---------- Boot ---------- */
 applyStaticI18n();

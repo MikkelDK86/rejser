@@ -1,6 +1,14 @@
-# Travel Pokédex v0.10.1 — data-safety release + link fix
+# Travel Pokédex v0.11.0 — trip pins
 
 Personal travel archive, an installable, offline-capable PWA. Data lives in IndexedDB on the device.
+
+## What's new in 0.11.0 — pins on the trip map
+- The **Map tab of a trip** now drops a pin on every place of the trip. The **first place entered is the primary pin** (its own colour, slightly larger); the others share a second colour. Both colours follow the map palette; a legend and a list under the map name every place.
+- Well-known cities (~135) are pinned automatically. For any other place (AREA15, Hoover Dam, a small town …) tap **Place on map**, then tap the spot; **Move** and **Remove pin** are available too. Hand-placed pins are stored with the trip, included in backups, survive editing the trip (matched by city name, while the country is unchanged) and also show on the world map.
+- The trip's country is drawn as a light tint on this map so the pins stand out; the view frames all pins.
+
+## What's new in 0.10.2
+- **Fixed:** the trip's Memory checklist (n/5) quietly required a story of at least 20 characters, so a short summary left it at 4/5. Any text now counts as the story (spaces alone do not). The **Storyteller** badge keeps its 20-character rule, and its description now says so.
 
 ## What's new in 0.10.1
 - **Fixed:** tapping the stamp of a country whose name contains a space (United States, United Kingdom, South Africa …) opened the Home screen (which lists every trip) instead of that country's page. The same bug affected cities with a space (Las Vegas, New York), city chips on a trip page, and the map's country sheet. Links now work for every name, including apostrophes, dots and accents — tested on all 46 such countries. A country or city page that does not exist now falls back to the Passport, not Home.
