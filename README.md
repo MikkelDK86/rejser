@@ -1,6 +1,9 @@
-# Travel Pokédex v0.10.0 — data-safety release
+# Travel Pokédex v0.10.1 — data-safety release + link fix
 
 Personal travel archive, an installable, offline-capable PWA. Data lives in IndexedDB on the device.
+
+## What's new in 0.10.1
+- **Fixed:** tapping the stamp of a country whose name contains a space (United States, United Kingdom, South Africa …) opened the Home screen (which lists every trip) instead of that country's page. The same bug affected cities with a space (Las Vegas, New York), city chips on a trip page, and the map's country sheet. Links now work for every name, including apostrophes, dots and accents — tested on all 46 such countries. A country or city page that does not exist now falls back to the Passport, not Home.
 
 ## What's new in 0.10.0 — protecting your data
 Updating the app never touches your data (trips and photos live in the browser's own storage, not in the app files), but data can still *look* lost for other reasons. This release closes those gaps:
