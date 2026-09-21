@@ -1,6 +1,14 @@
-# Travel Pokédex v0.9.0 — detailed world map
+# Travel Pokédex v0.9.2 — detailed world map, subtle colours
 
 Personal travel archive, an installable, offline-capable PWA. Data lives in IndexedDB on the device.
+
+## What's new in 0.9.2
+- The three numbers under the map (countries, cities, journeys) and the same row on the More page are now centred in their columns.
+
+## What's new in 0.9.1 — subtle map colours
+- The map is no longer black and white. Default palette **Mist**: soft blue-grey sea, warm sand land, muted teal for visited countries and a soft amber for upcoming ones (with a darker outline so it reads on light land). Choose **Sage**, **Dusk** or the old **Black & white** under More → Map colours; the choice is remembered and the legend follows it.
+- The app's code now lives in `app.js` (previously inline in `index.html`), which fixes an occasional harmless request for a non-existent image that some browsers made while scanning the page. **Upload `app.js` along with the other files.**
+- All palettes keep visited/outline colours at ≥ 3:1 against the land and labels at ≥ 4.5:1 against their halo.
 
 ## What's new in 0.9.0 — the World tab is now a real map
 - **Natural Earth 50m country borders** (`assets/world-50m.json`, public domain): every coastline, border, island and small state, drawn accurately.
