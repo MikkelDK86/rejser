@@ -1,6 +1,33 @@
-# Travel Pokédex v0.6.2 — photo-first redesign, now in Danish
+# Travel Pokédex v0.9.0 — detailed world map
 
 Personal travel archive, an installable, offline-capable PWA. Data lives in IndexedDB on the device.
+
+## What's new in 0.9.0 — the World tab is now a real map
+- **Natural Earth 50m country borders** (`assets/world-50m.json`, public domain): every coastline, border, island and small state, drawn accurately.
+- **Pan and zoom** like a normal map app: drag, pinch, mouse wheel or the + / − buttons, double-tap to zoom in, and “show my places” to re-fit. Zooms from the whole world down to city level.
+- **Your countries on the map**: visited in black, upcoming in amber, wishlist countries with a dashed outline; names appear as you zoom (Danish or English), and small countries get a marker so they never disappear.
+- **City pins and labels** for the ~135 well-known cities on your trips (Rome, Las Vegas, Lübeck …); other places are left off the map because I do not have their coordinates.
+- **Tap any country** for a sheet: your status there, “Open country page”, or “Add to wishlist” / “Plan a trip” for countries you have not visited.
+- **Map / Globe switch**: the globe now uses the same real coastlines (drag to rotate, pinch to zoom, tap a country).
+- The **trip page Map tab** shows a zoomed map of that trip's country with its cities pinned.
+- Works offline (the map file is pre-cached). If the file ever fails to load, the old dot globe is used instead.
+
+## What's new in 0.8.1
+- **City suggestions in the journey editor**: tap the city field to see the cities you have already used in that country; start typing and the list narrows. Cities from your other trips and the built-in list of ~140 major cities (matched by any spelling, e.g. “kob” → Copenhagen) are offered too. Picking one fills the current entry and keeps the others, so you reuse the same spelling and avoid accidental duplicates. Names show in the app language.
+
+## What's new in 0.8.0 — repeat visits
+- **Visit counter on stamps**: a small “×3” appears on a stamp once you have been to that country on more than one journey (upcoming trips don't count).
+- **Tap a stamp → country page**: the stamp, visits / cities / first-visit year, every city you have been to (most visited first, with a counter on repeat cities; cities with only an upcoming trip are tagged “Upcoming”) and all journeys in that country, including ones without a city.
+- **Tap a city → timeline** of every trip to that city, newest first, with photo, dates, length and a story snippet. Tap an entry to open the trip. City chips on a trip page open the city timeline too.
+- **Merged city names**: København = Copenhagen = Kobenhavn, Rom = Roma = Rome, Zürich = Zurich … (about 140 major cities, with English and Danish display names; other cities keep the spelling you typed). City totals, badges and wishlist matching all use the merged names.
+- Deep links work (`#/country/italy`, `#/city/italy/rome`) and the pages update instantly when you switch language.
+
+## What's new in 0.7.0 — game elements (Passport now has four tabs)
+- **Badges** (about 58): milestones for countries, cities, journeys, own photos and continents; explorer badges (Across the pond, Southern Hemisphere, Both sides of the equator, The high north, Island hopper, Small but mighty); trip badges (Every season, A week away, A month away, Regular); memory badges (Storyteller, Curator); wishlist badges (Dreamer, Wish come true, Dream chaser); and one for every completed collection. Locked badges are grey; tap any badge to see how to earn it and your progress. Earned badges are remembered even if you later delete a trip. The first launch after updating records what you already earned silently.
+- **Collections**: 21 regional sets (Norden, Baltikum, Benelux, Alperne, Sydøstasien, Caribien …) with progress bars and country chips. Tap one to see which countries are missing and add them to your wishlist with one tap. Completing a collection earns its badge.
+- **Wishlist** for countries *and* cities. Open country wishes appear as grey silhouettes in the Stamps tab and as hollow rings on the globe; wishes with an upcoming trip show as “Planned”; when you travel there the wish is ticked off with a celebration. “Plan a trip” pre-fills the journey editor.
+- **Memory checklist** on every past trip (cover photo of your own, 3+ photos, a short story, a city, start and end dates). Incomplete items are tappable and open the editor. Nothing nags you outside the trip page.
+- Celebrations are queued: new stamp → wishes come true → new badges. Backups now include the wishlist and earned badges.
 
 ## What's new in 0.6.2
 - **Danish translation of the whole app** (Danish is the default; switch to English under More → Sprog / Language). The choice is remembered on the device. Country names, months on the stamps, plurals and all messages follow the language.
