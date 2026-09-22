@@ -1,7 +1,7 @@
 {
   "id": "travel-pokedex",
-  "name": "Travel Pokédex",
-  "short_name": "Travel Pokédex",
+  "name": "Wayfarer",
+  "short_name": "Wayfarer",
   "description": "Et personligt arkiv over de steder, du har været.",
   "start_url": "./",
   "scope": "./",

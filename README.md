@@ -1,6 +1,13 @@
-# Travel Pokédex v0.12.0 — redesigned progress card
+# Wayfarer v0.13.0 — renamed, new icon
 
 Personal travel archive, an installable, offline-capable PWA. Data lives in IndexedDB on the device.
+
+## What's new in 0.13.0 — renamed to Wayfarer
+- **New name**: "Travel Pokédex" is now **Wayfarer**, everywhere in the interface (page title, Home header, More footer, iOS home-screen title, share sheet).
+- **New app icon**: a dotted stamp-perforation ring around a map pin, in ink/amber. All sizes regenerated (192, 512, maskable, apple-touch, favicon).
+- **What was deliberately kept unchanged**, so nothing breaks for you:
+  - The manifest's `id` field, the IndexedDB database name, and the backup file's internal format id all still say "travel-pokedex" — these are invisible plumbing, and changing them would either orphan your home-screen install or stop old backups from importing. A backup exported before this update still imports fine.
+  - Exported backup files are now named `wayfarer-backup-*.json` (cosmetic only).
 
 ## What's new in 0.12.0
 - Replaced the small centred "next stamp" ring (a lot of empty margin either side of it) with a full-width black card, the same style as the "next trip" card on World and the progress card at the bottom of Passport. It now shows a compact ring, "Next stamp at 5 countries · 2 more to go", and — new — small tappable chips for your reserved/upcoming countries (PT, GB …), so the card is informative rather than decorative. Tapping a chip opens that country's page directly from Home; tapping the rest of the card opens the Passport.

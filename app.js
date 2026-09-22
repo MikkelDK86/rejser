@@ -1,4 +1,4 @@
-const APP_VERSION='0.12.0';
+const APP_VERSION='0.13.0';
 /* Storage names. Everything on a github.io address shares one browser storage area, so ours has a unique name
    (the previous name 'travelPokedex' is only read once, to copy old data across). */
 const DB_NAME='travel-pokedex-archive',OLD_DB_NAME='travelPokedex',LEGACY_KEY='travelPokedexTrips',PLACEHOLDER='assets/placeholder.svg';
@@ -486,7 +486,7 @@ function recenterGlobe(){globeState.centered=false;renderWorldLegacy()}
 /* ---------- Views ---------- */
 function header(isHome){
   const past=visited().sort(byStartDesc),th=past.slice(0,3).map(t=>`<img src="${esc(coverThumb(t))}" alt="">`).join(''),extra=Math.max(0,trips.length-3);
-  return `<div class="top">${isHome?'<div class="brand">Travel Pokédex</div>':`<div class="thumbs" aria-hidden="true">${th}${extra?`<span class="more">+${extra}</span>`:''}</div>`}<div class="tools"><button class="iconBtn" onclick="showView('more')" aria-label="${esc(tr('settings'))}">${ico('more')}</button><button class="iconBtn addBtn" onclick="openEditor()" aria-label="${esc(tr('add'))}">${ico('plus')}</button></div></div>`;
+  return `<div class="top">${isHome?'<div class="brand">Wayfarer</div>':`<div class="thumbs" aria-hidden="true">${th}${extra?`<span class="more">+${extra}</span>`:''}</div>`}<div class="tools"><button class="iconBtn" onclick="showView('more')" aria-label="${esc(tr('settings'))}">${ico('more')}</button><button class="iconBtn addBtn" onclick="openEditor()" aria-label="${esc(tr('add'))}">${ico('plus')}</button></div></div>`;
 }
 const NUM=(txt,size,cls='')=>`<span class="num ${cls}" style="font-size:${size}px">${txt}</span>`;
 
@@ -587,7 +587,7 @@ const isStandalone=()=>matchMedia('(display-mode: standalone)').matches||navigat
 const isIOS=()=>/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 function renderMore(){
   const install=isStandalone()?'':deferredInstall?`<div class="mcard"><div class="mi" aria-hidden="true">📲</div><div class="grow"><b>${tr('install.t')}</b><div class="small">${tr('install.d')}</div><div class="actions"><button class="secondary" onclick="installApp()">${tr('install.btn')}</button></div></div></div>`:isIOS()?`<div class="mcard"><div class="mi" aria-hidden="true">📲</div><div class="grow"><b>${tr('install.t')}</b><div class="small">${tr('install.ios')}</div></div></div>`:'';
-  $('more').innerHTML=header(false)+`<div class="head"><h1 class="h1">${tr('more.title')}</h1><div class="cap">${tr('settings')}</div></div><div class="metrics3 pad"><div>${NUM(pad2(visited().length),40)}<div class="cap">${tr('m.trips')}</div></div><div>${NUM(pad2(countryList().length),40)}<div class="cap">${tr('m.countries')}</div></div><div>${NUM(pad2(photoCount()),40)}<div class="cap">${tr('m.photos')}</div></div></div><div class="mlist">${storageOK?'':`<div class="mcard"><div class="mi" aria-hidden="true">⚠️</div><div class="grow"><b>${tr('nostorage.t')}</b><div class="small">${tr('nostorage.d')}</div></div></div>`}<div class="mcard"><div class="mi" aria-hidden="true">💾</div><div class="grow"><b>${tr('backup.t')}</b><div class="small">${tr('backup.d')}</div><div class="small st"><b>${backupStatus()}</b></div><div class="actions"><button class="secondary" onclick="exportBackup()">${tr('backup.export')}</button><button class="secondary" onclick="$('importFile').click()">${tr('backup.import')}</button></div></div></div><div class="mcard"><div class="mi" aria-hidden="true">🌐</div><div class="grow"><b>${tr('lang.t')}</b><div class="actions"><button class="secondary" aria-pressed="${LANG==='da'}" onclick="setLang('da')">Dansk</button><button class="secondary" aria-pressed="${LANG==='en'}" onclick="setLang('en')">English</button></div></div></div>${mapPaletteCard()}${install}<div id="persistNote"></div><div class="small" id="storageInfo" style="margin:14px 4px 0"></div><div class="small" style="margin:6px 4px">Travel Pokédex v${APP_VERSION}</div></div>`;
+  $('more').innerHTML=header(false)+`<div class="head"><h1 class="h1">${tr('more.title')}</h1><div class="cap">${tr('settings')}</div></div><div class="metrics3 pad"><div>${NUM(pad2(visited().length),40)}<div class="cap">${tr('m.trips')}</div></div><div>${NUM(pad2(countryList().length),40)}<div class="cap">${tr('m.countries')}</div></div><div>${NUM(pad2(photoCount()),40)}<div class="cap">${tr('m.photos')}</div></div></div><div class="mlist">${storageOK?'':`<div class="mcard"><div class="mi" aria-hidden="true">⚠️</div><div class="grow"><b>${tr('nostorage.t')}</b><div class="small">${tr('nostorage.d')}</div></div></div>`}<div class="mcard"><div class="mi" aria-hidden="true">💾</div><div class="grow"><b>${tr('backup.t')}</b><div class="small">${tr('backup.d')}</div><div class="small st"><b>${backupStatus()}</b></div><div class="actions"><button class="secondary" onclick="exportBackup()">${tr('backup.export')}</button><button class="secondary" onclick="$('importFile').click()">${tr('backup.import')}</button></div></div></div><div class="mcard"><div class="mi" aria-hidden="true">🌐</div><div class="grow"><b>${tr('lang.t')}</b><div class="actions"><button class="secondary" aria-pressed="${LANG==='da'}" onclick="setLang('da')">Dansk</button><button class="secondary" aria-pressed="${LANG==='en'}" onclick="setLang('en')">English</button></div></div></div>${mapPaletteCard()}${install}<div id="persistNote"></div><div class="small" id="storageInfo" style="margin:14px 4px 0"></div><div class="small" style="margin:6px 4px">Wayfarer v${APP_VERSION}</div></div>`;
   updateStorageInfo();
 }
 async function updateStorageInfo(){
@@ -771,15 +771,15 @@ async function exportBackup(){
     const {recs,photos}=await readAll();
     const out={app:'travel-pokedex',version:1,exportedAt:new Date().toISOString(),trips:recs,photos:[],wishlist:wishlist(),badges:meta.badges||{}};
     for(const p of photos)out.photos.push({id:p.id,tripId:p.tripId,blob:await blobToDataURL(p.blob),thumb:await blobToDataURL(p.thumb||p.blob)});
-    const name=`travel-pokedex-backup-${todayStr()}.json`,blob=new Blob([JSON.stringify(out)],{type:'application/json'}),file=new File([blob],name,{type:'application/json'});
+    const name=`wayfarer-backup-${todayStr()}.json`,blob=new Blob([JSON.stringify(out)],{type:'application/json'}),file=new File([blob],name,{type:'application/json'});
     $('toast').classList.remove('show');
-    if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:'Travel Pokédex backup'});await markBackedUp();return}catch(e){if(e.name==='AbortError')return}}
+    if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:'Wayfarer backup'});await markBackedUp();return}catch(e){if(e.name==='AbortError')return}}
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
     await markBackedUp();toast(tr('toast.saved'));
   }catch(err){console.error(err);toast(tr('toast.fail'))}
 }
 function parseBackup(data){
-  if(!data||data.app!=='travel-pokedex'||!Array.isArray(data.trips)||!Array.isArray(data.photos))throw new Error('Not a Travel Pokédex backup');
+  if(!data||data.app!=='travel-pokedex'||!Array.isArray(data.trips)||!Array.isArray(data.photos))throw new Error('Not a Wayfarer backup');   // the internal format id stays 'travel-pokedex' so backups made before the rename still import
   const okId=s=>typeof s==='string'&&/^[\w-]{1,80}$/.test(s);
   const rows=data.photos.filter(p=>okId(p.id)&&/^data:image\//.test(p.blob||'')).map(p=>({id:p.id,tripId:String(p.tripId||''),blob:dataURLToBlob(p.blob),thumb:dataURLToBlob(/^data:image\//.test(p.thumb||'')?p.thumb:p.blob)}));
   const recs=data.trips.filter(t=>t&&okId(t.id)).map(t=>toRecord(normalizeTrip({...t,photos:(Array.isArray(t.photos)?t.photos:[]).map(r=>r&&r.asset?{id:null,asset:r.asset}:{id:r&&r.id})})));
