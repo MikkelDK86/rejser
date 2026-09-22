@@ -1,6 +1,14 @@
-# Travel Pokédex v0.11.0 — trip pins
+# Travel Pokédex v0.12.0 — redesigned progress card
 
 Personal travel archive, an installable, offline-capable PWA. Data lives in IndexedDB on the device.
+
+## What's new in 0.12.0
+- Replaced the small centred "next stamp" ring (a lot of empty margin either side of it) with a full-width black card, the same style as the "next trip" card on World and the progress card at the bottom of Passport. It now shows a compact ring, "Next stamp at 5 countries · 2 more to go", and — new — small tappable chips for your reserved/upcoming countries (PT, GB …), so the card is informative rather than decorative. Tapping a chip opens that country's page directly from Home; tapping the rest of the card opens the Passport.
+
+## What's new in 0.11.1
+Home was the one screen still stuck in flat black/white/amber while the rest of the app (stamps, map, passport) had grown colourful. Two small, connected changes:
+- The **journey number badge** on the front card (e.g. "№003") is now tinted with that country's own stamp colour, the same ink used on its passport stamp.
+- The **progress ring** (and its filled centre) now uses your chosen map palette's "visited" colour instead of flat amber/black — so Home changes together with the map palette under More → Map colours, and updates immediately even if you switch palette from another screen.
 
 ## What's new in 0.11.0 — pins on the trip map
 - The **Map tab of a trip** now drops a pin on every place of the trip. The **first place entered is the primary pin** (its own colour, slightly larger); the others share a second colour. Both colours follow the map palette; a legend and a list under the map name every place.

@@ -1,4 +1,4 @@
-const APP_VERSION='0.11.0';
+const APP_VERSION='0.12.0';
 /* Storage names. Everything on a github.io address shares one browser storage area, so ours has a unique name
    (the previous name 'travelPokedex' is only read once, to copy old data across). */
 const DB_NAME='travel-pokedex-archive',OLD_DB_NAME='travelPokedex',LEGACY_KEY='travelPokedexTrips',PLACEHOLDER='assets/placeholder.svg';
@@ -497,13 +497,16 @@ function deckDefault(){const d=deckTrips();let i=-1;d.forEach((t,k)=>{if(!isUpco
 function deckCard(t,i){
   const up=isUpcoming(t),no=tripNo(t),len=t.title.length,fs=len>18?18:len>13?22:len>9?26:30;
   const dd=daysUntil(t),nd=days(t),np=cityList(t).length,meta=up?tr('deck.in',{n:dd}):`${nd} ${tr('n.day',{n:nd}).toUpperCase()} · ${PL(np,'n.place').toUpperCase()}`;
-  return `<button class="dcard${up?' up':''}" data-i="${i}" onclick="deckTap(${i})" aria-label="${esc(t.title)}, ${esc(countryName(t.country))}, ${esc(fmt(t.start))}"><img data-src="${esc(cover(t))}" alt=""><span class="scrim"></span><span class="veil"></span><span class="no">${up?tr('deck.upcoming'):'№'+pad2(no||0)}</span><span class="txt"><span class="dt" style="font-size:${fs}px">${esc(t.title)}</span><span class="rule"></span><span class="dmeta">${esc(meta)}</span></span></button>`;
+  return `<button class="dcard${up?' up':''}" data-i="${i}" onclick="deckTap(${i})" aria-label="${esc(t.title)}, ${esc(countryName(t.country))}, ${esc(fmt(t.start))}"><img data-src="${esc(cover(t))}" alt=""><span class="scrim"></span><span class="veil"></span><span class="no" style="background:${up?MAPC.upcoming:inkFor(no||1)};color:${up?'#0b0b0c':'#fff'}">${up?tr('deck.upcoming'):'№'+pad2(no||0)}</span><span class="txt"><span class="dt" style="font-size:${fs}px">${esc(t.title)}</span><span class="rule"></span><span class="dmeta">${esc(meta)}</span></span></button>`;
 }
 function radarHtml(n,next){
-  const frac=Math.min(1,n/next),C=314.16;
-  return `<button class="radar" onclick="showView('passport')" aria-label="${esc(tr('radar.aria',{n,next}))}"><svg width="200" height="200" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="98" fill="none" stroke="#c9c9cc" stroke-width="1" opacity=".55"/><circle cx="100" cy="100" r="82" fill="none" stroke="#c9c9cc" stroke-width="1" opacity=".75"/><circle cx="100" cy="100" r="66" fill="none" stroke="#c9c9cc" stroke-width="1"/><circle cx="100" cy="100" r="50" fill="none" stroke="#d9d9dc" stroke-width="7"/><circle cx="100" cy="100" r="50" fill="none" stroke="#f5b301" stroke-width="7" stroke-linecap="round" stroke-dasharray="${(C*frac).toFixed(1)} ${C}" transform="rotate(-90 100 100)"/><circle cx="100" cy="100" r="35" fill="#0b0b0c"/><text x="100" y="101" text-anchor="middle" dominant-baseline="central" font-size="26" font-weight="500" fill="#ffffff" ${SF}>${pad2(n)}</text></svg><span class="radarTag">${esc(tr('radar.tag',{n:next}))}</span></button>`;
+  const frac=Math.min(1,n/next),C=169.6,left=next-n,pe=passportEntries(),up=pe.up.slice(0,5);
+  const ring=`<svg width="64" height="64" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="27" fill="none" stroke="#3a3c40" stroke-width="6"/><circle cx="32" cy="32" r="27" fill="none" stroke="${MAPC.visited}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${(C*frac).toFixed(1)} ${C}" transform="rotate(-90 32 32)"/><text x="32" y="33" text-anchor="middle" dominant-baseline="central" font-size="18" font-weight="700" fill="#fff" ${SF}>${pad2(n)}</text></svg>`;
+  const chips=up.length?`<div class="pgChips">${up.map(e=>`<button class="pgChip" data-k="${esc(e.key)}" onclick="openCountry(this.dataset.k)" aria-label="${esc(e.name)}" title="${esc(e.name)}">${esc(countryCode(e.name))}</button>`).join('')}${pe.up.length>up.length?`<span class="pgMore">+${pe.up.length-up.length}</span>`:''}</div>`:'';
+  return `<div class="blackCard progressCard"><button class="pgMain" onclick="showView('passport')" aria-label="${esc(tr('radar.aria',{n,next}))}">${ring}<span class="pgTxt"><span class="capL">${esc(tr('pass.next',{n:next}))}</span><span class="nextTitle" style="font-size:19px">${left>0?esc(tr('pass.more',{n:left})):esc(tr('set.complete'))}</span></span>${ico('chev',20)}</button>${chips}</div>`;
 }
 function renderHome(){
+  applyHomeWash();
   const d=deckTrips(),n=countryList().length,next=nextMilestone(n);
   if(deckIdx===null||deckIdx>=d.length)deckIdx=deckDefault();
   const up=trips.filter(isUpcoming).length;
@@ -608,6 +611,7 @@ function activate(name){
   document.querySelectorAll('.pillNav button').forEach(b=>{const on=b.dataset.view===(name==='country'||name==='city'?'passport':name);b.classList.toggle('on',on);if(on)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
   window.scrollTo(0,0);
   if(name==='world')renderWorld();
+  if(name==='home')renderHome();   // picks up any palette change made while away
 }
 function route(){
   let [name,arg,arg2]=location.hash.replace(/^#\/?/,'').split('/');name=ALIAS[name]||name;
@@ -1364,7 +1368,7 @@ function applyMapCss(){const r=document.documentElement.style;r.setProperty('--m
 applyMapCss();
 function setMapPalette(id){
   if(!MAP_PALETTES[id])return;MAP_PAL_ID=id;MAPC=Object.assign({},MAP_PALETTES[id]);try{localStorage.setItem('tp_map_pal',id)}catch(e){}
-  applyMapCss();if(worldView)worldView.request();if(tripView)tripView.request();renderMore();
+  applyMapCss();if(worldView)worldView.request();if(tripView)tripView.request();renderMore();if(typeof $==='function'&&$('home')&&$('home').classList.contains('active'))renderHome();
 }
 function mapPaletteCard(){
   const sw=id=>{const q=MAP_PALETTES[id];return `<button class="palBtn" aria-pressed="${MAP_PAL_ID===id}" onclick="setMapPalette('${id}')" aria-label="${esc(LANG==='da'?q.da:q.en)}"><span class="palSw"><i style="background:${q.ocean}"></i><i style="background:${q.land}"></i><i style="background:${q.visited}"></i><i style="background:${q.upcoming}"></i></span><span class="palN">${esc(LANG==='da'?q.da:q.en)}</span></button>`};
@@ -1859,3 +1863,7 @@ applyStaticI18n();
   checkCelebrations();
   if(db&&!dataLocked&&meta.lastChange&&navigator.storage&&navigator.storage.persisted)navigator.storage.persisted().then(p=>{if(!p)requestPersistence()}).catch(()=>{});
 })();
+function applyHomeWash(){
+  const el=$('home');if(!el)return;
+  el.style.background=`radial-gradient(120% 60% at 50% -10%, ${MAPC.ocean}55, transparent 60%), var(--bg)`;
+}
