@@ -18,6 +18,7 @@ const I18N={
  'nodate':['No date','Ingen dato'],
  'deck.upcoming':['UPCOMING','KOMMENDE'],'deck.in':[['IN {n} DAY','IN {n} DAYS'],['OM {n} DAG','OM {n} DAGE']],'deck.aria':['Journeys','Rejser'],
  'home.empty':['No journeys yet.<br>Tap ＋ to add your first one.','Ingen rejser endnu.<br>Tryk på ＋ for at tilføje din første.'],
+ 'home.tag':['MORE ADVENTURES AHEAD','MERE AF VERDEN VENTER'],'home.next':['NEXT JOURNEY','NÆSTE REJSE'],'home.latest':['LATEST JOURNEY','SENESTE REJSE'],'home.in':['YOUR JOURNEY STARTS IN','DIN REJSE STARTER OM'],'home.days':['days','dage'],'home.open':['View journey','Se rejse'],'home.program':['UP NEXT','NÆSTE PÅ PROGRAMMET'],'home.all':['See all','Se alle'],'home.yours':['YOUR JOURNEYS','DINE REJSER'],'home.noStory':['A journey to remember','Et minde på vej'],'home.carousel':['Your journeys','Dine rejser'],
  'radar.tag':['NEXT STAMP AT {n}','NÆSTE STEMPEL VED {n}'],'radar.aria':['{n} of {next} countries to the next stamp. Open passport','{n} af {next} lande til næste stempel. Åbn pas'],
  'world.title':['World','Verden'],'world.aria':['Interactive globe. {n} countries collected: {list}. Drag or use the arrow keys to rotate.','Interaktiv globus. {n} lande samlet: {list}. Træk eller brug piletasterne for at rotere.'],
  'none.yet':['none yet','ingen endnu'],'globe.recentre':['Recentre the globe','Centrér globussen'],'legend.collected':['Collected','Samlet'],'legend.next':['Next trip','Næste rejse'],
@@ -514,11 +515,12 @@ function radarHtml(n,next){
 }
 function renderHome(){
   applyHomeWash();
-  const d=deckTrips(),n=countryList().length,next=nextMilestone(n);
-  if(deckIdx===null||deckIdx>=d.length)deckIdx=deckDefault();
-  const up=trips.filter(isUpcoming).length;
-  $('home').innerHTML=header(true)+(d.length?`<div class="deckWrap"><div class="deck" id="deck" role="group" aria-roledescription="carousel" aria-label="${esc(tr('deck.aria'))}" tabindex="0">${d.map(deckCard).join('')}</div></div><div class="dots" id="dots" aria-hidden="true"></div><div class="capC">${PL(visited().length,'n.journey')} · ${up} ${tr('n.upcoming')}</div>`:`<div class="empty">${tr('home.empty')}</div>`)+radarHtml(n,next);
-  updateDeck();
+  const next=nextTrip(),feature=next||currentTrip(),all=[...trips].sort(byStartDesc),upcoming=nextTrip();
+  const dateRange=t=>t.start?(t.end&&t.end!==t.start?`${fmt(t.start)} – ${fmt(t.end)}`:fmt(t.start)):tr('nodate');
+  const featureHtml=feature?`<button class="homeFeature" data-trip="${esc(feature.id)}" onclick="openTrip(this.dataset.trip)" aria-label="${esc(feature.title)}, ${esc(tr('home.open'))}"><img src="${esc(cover(feature))}" alt=""><span class="hfScrim"></span><span class="hfLabel">${esc(tr(next?'home.next':'home.latest'))}</span><span class="hfMore" aria-hidden="true">${ico('more',22)}</span><span class="hfInfo"><span class="hfCity">${esc(feature.title)}</span><span class="hfDate">${esc(dateRange(feature))}</span></span>${feature.story?`<span class="hfStory">${esc(feature.story.slice(0,72))}</span>`:`<span class="hfStory">${esc(tr('home.noStory'))}</span>`}<span class="hfFooter"><span class="hfRing">${next?daysUntil(next):tripNo(feature)||'✓'}</span><span class="hfFootText"><span class="capL">${esc(next?tr('home.in'):tripCountryLabel(feature))}</span><strong>${esc(next?tr('home.days'):tr('home.latest'))}</strong></span><span class="hfAction">${esc(tr('home.open'))} ›</span></span></button>`:`<div class="empty">${tr('home.empty')}</div>`;
+  const schedule=upcoming?`<section class="homeSection"><div class="homeSectionHead"><span>${esc(tr('home.program'))}</span><button onclick="showView('trips')">${esc(tr('home.all'))} ${ico('chev',16)}</button></div><button class="scheduleRow" data-trip="${esc(upcoming.id)}" onclick="openTrip(this.dataset.trip)"><span class="scheduleIcon" aria-hidden="true">✈</span><span class="scheduleCopy"><b>${esc(upcoming.title)}</b><span>${esc(dateRange(upcoming))}</span></span>${ico('chev',20)}</button></section>`:'';
+  const carousel=all.length?`<section class="homeSection"><div class="homeSectionHead"><span>${esc(tr('home.yours'))}</span><button onclick="showView('trips')">${esc(tr('home.all'))} ${ico('chev',16)}</button></div><div class="homeCarousel" role="group" aria-roledescription="carousel" aria-label="${esc(tr('home.carousel'))}">${all.map(t=>`<button class="miniTrip" data-trip="${esc(t.id)}" onclick="openTrip(this.dataset.trip)" aria-label="${esc(t.title)}, ${esc(dateRange(t))}"><img src="${esc(coverThumb(t))}" alt=""><span>${esc(t.title)}</span></button>`).join('')}</div></section>`:'';
+  $('home').innerHTML=`<div class="homeTop"><div class="homeBrand">Wayfarer<span>.</span></div><div class="tools"><button class="iconBtn" onclick="showView('more')" aria-label="${esc(tr('settings'))}">${ico('more')}</button><button class="iconBtn addBtn" onclick="openEditor()" aria-label="${esc(tr('add'))}">${ico('plus')}</button></div></div><div class="homeTag">${esc(tr('home.tag'))}</div>${featureHtml}${schedule}${carousel}<div style="height:18px"></div>`;
 }
 function updateDeck(){
   const cards=[...document.querySelectorAll('#deck .dcard')];if(!cards.length)return;

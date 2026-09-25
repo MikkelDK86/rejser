@@ -42,6 +42,32 @@ button{cursor:pointer;border:0;background:none;padding:0}
 .grow{flex:1;min-width:0}
 
 /* home deck */
+.homeTop{padding:28px 20px 0;display:flex;align-items:center;justify-content:space-between}
+.homeBrand{font-size:28px;font-weight:700;letter-spacing:-.04em;color:#17172d}.homeBrand span{color:#7253e8}
+.homeTag{padding:2px 20px 0;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#66627f;font-weight:600}
+.homeFeature{position:relative;height:clamp(370px,64vh,560px);min-height:410px;margin:26px 16px 0;border-radius:26px;overflow:hidden;background:#17172d;color:#fff;box-shadow:0 16px 34px rgba(20,18,50,.18)}
+.homeFeature>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.homeFeature .hfScrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,13,37,.28),rgba(11,13,37,.02) 38%,rgba(11,13,37,.35) 55%,#11152f 84%)}
+.hfLabel{position:absolute;top:24px;left:24px;padding:11px 18px;border-radius:24px;background:#b94d55;color:white;font-size:11px;letter-spacing:.2em;font-weight:700}
+.hfMore{position:absolute;top:18px;right:18px;width:48px;height:48px;border-radius:50%;background:#ffffff20;color:#fff;display:grid;place-items:center;backdrop-filter:blur(8px)}
+.hfInfo{position:absolute;left:26px;right:24px;bottom:122px}
+.hfCity{font-size:clamp(38px,11vw,62px);font-weight:400;line-height:1;letter-spacing:.06em;text-transform:uppercase}
+.hfDate{margin-top:12px;font-size:15px;letter-spacing:.2em;color:#e9e7f0;text-transform:uppercase}
+.hfStory{position:absolute;right:25px;bottom:170px;max-width:34%;font-size:16px;font-style:italic;line-height:1.25;text-align:right;color:#f4edf4}
+.hfFooter{position:absolute;left:0;right:0;bottom:0;min-height:108px;padding:18px 22px;display:flex;align-items:center;gap:16px;background:#11152ff2;border:1px solid #ffffff18;border-radius:25px 25px 0 0}
+.hfRing{width:70px;height:70px;border:6px solid #34364d;border-right-color:#7959f2;border-top-color:#7959f2;border-radius:50%;display:grid;place-items:center;font-size:20px;font-weight:700;flex:none}
+.hfFootText{min-width:0;flex:1}.hfFootText .capL{font-size:10px}.hfFootText strong{font-size:21px;display:block;margin-top:3px}
+.hfAction{height:54px;padding:0 20px;border-radius:30px;background:#5540bb;color:white;font-size:14px;font-weight:600;flex:none}
+.homeSection{margin:24px 16px 0;padding:18px 16px 16px;border-radius:24px;background:#f6f5fa}
+.homeSectionHead{display:flex;align-items:center;justify-content:space-between;margin:0 2px 14px;font-size:18px;font-weight:700}
+.homeSectionHead button{font-size:13px;color:#615b7e;display:flex;align-items:center;gap:4px}
+.scheduleRow{width:100%;min-height:78px;padding:12px 14px;border-radius:18px;background:#eeecf8;display:flex;align-items:center;gap:14px;text-align:left}
+.scheduleIcon{width:54px;height:54px;border-radius:50%;background:#dcd5ff;color:#23213c;display:grid;place-items:center;font-size:22px;flex:none}
+.scheduleCopy{min-width:0;flex:1}.scheduleCopy b{display:block;font-size:16px}.scheduleCopy span{display:block;margin-top:4px;color:#66627f;font-size:14px}
+.homeCarousel{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:0 0 4px;touch-action:pan-x;scrollbar-width:none}.homeCarousel::-webkit-scrollbar{display:none}
+.miniTrip{position:relative;width:min(53vw,230px);height:118px;flex:none;border-radius:18px;overflow:hidden;color:#fff;text-align:left;scroll-snap-align:start;background:#34364d}
+.miniTrip img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.miniTrip:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 25%,rgba(12,15,39,.9))}
+.miniTrip span{position:absolute;z-index:1;left:14px;right:12px;bottom:12px;font-size:17px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .deckWrap{position:relative;height:376px;margin-top:22px;overflow:visible}
 .deck{position:relative;width:250px;height:352px;margin:0 auto;touch-action:pan-y;user-select:none;-webkit-user-select:none;outline-offset:8px}
 .dcard{position:absolute;left:0;top:0;width:250px;height:352px;border-radius:22px;overflow:hidden;background:#3a3c40;transition:transform .34s cubic-bezier(.2,.8,.2,1),opacity .34s;box-shadow:0 14px 28px rgba(0,0,0,.18);cursor:pointer;color:#fff;text-align:left;display:block}
