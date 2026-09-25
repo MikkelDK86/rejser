@@ -1,6 +1,9 @@
-# Wayfarer v0.20.0 — Home fixes and travel challenges
+# Wayfarer v0.20.1 — clarify the latest-trip stamp highlight
 
 Personal travel archive, an installable, offline-capable PWA. Data lives in IndexedDB on the device.
+
+## What's new in 0.20.1
+- The yellow stamp highlight now follows the journey with the latest end date (falling back to its start date), and a legend names that journey so the mark is clear.
 
 ## What's new in 0.20.0
 - Fixed the Home countdown to show its number with the day label, improved spacing between the trip title and dates, and added an ellipsis to shortened stories.
