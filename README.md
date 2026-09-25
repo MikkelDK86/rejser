@@ -1,6 +1,12 @@
-# Wayfarer v0.15.0 — multi-country journeys, many more cities
+# Wayfarer v0.16.0 — redesigned home screen
 
 Personal travel archive, an installable, offline-capable PWA. Data lives in IndexedDB on the device.
+
+## What's new in 0.16.0 — redesigned Home
+- **Featured journey:** the Home screen highlights the next upcoming journey with its cover photo and a countdown. When there is no upcoming journey, it highlights the latest journey instead.
+- **Up next:** when a future journey exists, a compact program row links to it.
+- **Your journeys:** all journeys appear in a smaller horizontal carousel that can be swiped through; tap a card to open that journey.
+- The bottom navigation and local data storage are unchanged.
 
 ## What's new in 0.15.0
 - **A journey can now cover several countries.** The single Country field + comma-separated cities is replaced with a repeatable list of "places," each its own city and country, in the order you visited them (Kota Kinabalu, Malaysia → Kuching, Malaysia → Siem Reap, Cambodia → Phnom Penh, Cambodia, all in one journey). Each country gets its own passport stamp, correctly dated; the trip's map pins every city across every country it touches; the Stamp tab shows one stamp per country; and saving a journey that introduces several brand-new countries at once now celebrates each one in turn (previously only the last one was shown, and the others were silently marked as already seen — a real bug this change surfaced and fixed).

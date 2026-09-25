@@ -1,4 +1,4 @@
-const APP_VERSION='0.15.0';
+const APP_VERSION='0.16.0';
 /* Storage names. Everything on a github.io address shares one browser storage area, so ours has a unique name
    (the previous name 'travelPokedex' is only read once, to copy old data across). */
 const DB_NAME='travel-pokedex-archive',OLD_DB_NAME='travelPokedex',LEGACY_KEY='travelPokedexTrips',PLACEHOLDER='assets/placeholder.svg';
