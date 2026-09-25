@@ -1,6 +1,9 @@
-# Wayfarer v0.20.1 — clarify the latest-trip stamp highlight
+# Wayfarer v0.20.2 — clearer cover photo selection
 
 Personal travel archive, an installable, offline-capable PWA. Data lives in IndexedDB on the device.
+
+## What's new in 0.20.2
+- Photo thumbnails in the journey editor now clearly show which one is the cover and which can be selected as the cover. The selection is saved with the journey and shown across the app.
 
 ## What's new in 0.20.1
 - The yellow stamp highlight now follows the journey with the latest end date (falling back to its start date), and a legend names that journey so the mark is clear.

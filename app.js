@@ -1,4 +1,4 @@
-const APP_VERSION='0.20.1';
+const APP_VERSION='0.20.2';
 /* Storage names. Everything on a github.io address shares one browser storage area, so ours has a unique name
    (the previous name 'travelPokedex' is only read once, to copy old data across). */
 const DB_NAME='travel-pokedex-archive',OLD_DB_NAME='travelPokedex',LEGACY_KEY='travelPokedexTrips',PLACEHOLDER='assets/placeholder.svg';
@@ -52,7 +52,7 @@ const I18N={
  'ed.err.del':['Couldn’t delete – please try again.','Kunne ikke slette – prøv igen.'],'ed.del.confirm':['Delete this journey and its photos?','Slet denne rejse og dens billeder?'],
  'ed.proc':['Processing photo {i} of {n}…','Behandler billede {i} af {n}…'],'ed.max':['A journey can hold {max} photos – added the first {n}.','En rejse kan rumme {max} billeder – tilføjede de første {n}.'],
  'ed.failed':[['{n} photo couldn’t be read and was skipped.','{n} photos couldn’t be read and were skipped.'],['{n} billede kunne ikke læses og blev sprunget over.','{n} billeder kunne ikke læses og blev sprunget over.']],
- 'ed.photo.cover':['Photo {n} (cover)','Billede {n} (forside)'],'ed.photo.make':['Photo {n}: make cover','Billede {n}: gør til forside'],'ed.photo.rm':['Remove photo {n}','Fjern billede {n}'],'ed.cover':['Cover','Forside'],
+ 'ed.photo.cover':['Photo {n} (cover)','Billede {n} (forside)'],'ed.photo.make':['Photo {n}: make cover','Billede {n}: vælg som forside'],'ed.photo.rm':['Remove photo {n}','Fjern billede {n}'],'ed.cover':['Cover','Forside'],'ed.cover.choose':['Make cover','Vælg forside'],
  'cel.new':['NEW STAMP','NYT STEMPEL'],'cel.n':['{n} COUNTRIES','{n} LANDE'],'cel.more':['{n} more to {m}','{n} mere til {m}'],'cel.add':['Add photos','Tilføj billeder'],'cel.done':['Done','Færdig'],'cel.aria':['New stamp collected','Nyt stempel samlet'],
  'lb.aria':['Photo viewer','Billedvisning'],'lb.close':['Close photo viewer','Luk billedvisning'],'lb.prev':['Previous photo','Forrige billede'],'lb.next':['Next photo','Næste billede'],'lb.alt':['{title} – photo {i} of {n}','{title} – billede {i} af {n}'],
  'f.title':['Trip title','Rejsens titel'],'f.country':['Country','Land'],'f.city':['City or cities','By eller byer'],'f.start':['Start date','Startdato'],'f.end':['End date','Slutdato'],'f.story':['Story','Historie'],'f.photos':['Photos','Billeder'],
@@ -684,7 +684,7 @@ $('lightbox').addEventListener('pointerup',e=>{if(lbX===null)return;const dx=e.c
 /* ---------- Editor ---------- */
 function setMsg(text,info){const m=$('formMsg');m.textContent=text||'';m.classList.toggle('info',!!info)}
 function renderDraft(){
-  $('uploadPreview').innerHTML=draft.map((p,i)=>`<div class="draftItem${i===0?' cover':''}"><button type="button" class="draftImg" onclick="makeCover(${i})" aria-label="${esc(tr(i===0?'ed.photo.cover':'ed.photo.make',{n:i+1}))}"><img src="${esc(p.thumb)}" alt=""></button><button type="button" class="draftRm" onclick="removeDraft(${i})" aria-label="${esc(tr('ed.photo.rm',{n:i+1}))}">×</button>${i===0?'<span class="coverBadge">'+tr('ed.cover')+'</span>':''}</div>`).join('');
+  $('uploadPreview').innerHTML=draft.map((p,i)=>`<div class="draftItem${i===0?' cover':''}"><button type="button" class="draftImg" onclick="makeCover(${i})" aria-label="${esc(tr(i===0?'ed.photo.cover':'ed.photo.make',{n:i+1}))}"><img src="${esc(p.thumb)}" alt=""><span class="coverBadge">${esc(tr(i===0?'ed.cover':'ed.cover.choose'))}</span></button><button type="button" class="draftRm" onclick="removeDraft(${i})" aria-label="${esc(tr('ed.photo.rm',{n:i+1}))}">×</button></div>`).join('');
 }
 function makeCover(i){if(i>0){const [p]=draft.splice(i,1);draft.unshift(p);renderDraft()}}
 function removeDraft(i){const [p]=draft.splice(i,1);if(p&&p.isNew)revokePhoto(p);renderDraft()}

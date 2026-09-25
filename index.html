@@ -181,12 +181,13 @@ button{cursor:pointer;border:0;background:none;padding:0}
 .mediaPicker input{margin-top:8px;border:0;padding:0;background:none;width:auto}
 .notice{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.45}
 .draftGrid{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-.draftItem{position:relative;width:76px;height:76px}
+.draftItem{position:relative;width:86px;height:86px}
 .draftItem .draftImg{display:block;width:100%;height:100%;padding:0;border-radius:14px;overflow:hidden;border:2px solid transparent}
 .draftItem.cover .draftImg{border-color:var(--amb)}
 .draftItem img{width:100%;height:100%;object-fit:cover;display:block}
 .draftRm{position:absolute;top:-7px;right:-7px;width:26px;height:26px;border-radius:50%;background:var(--ink);color:#fff;font-size:16px;line-height:1}
-.coverBadge{position:absolute;left:4px;bottom:4px;font-size:9px;letter-spacing:.06em;text-transform:uppercase;background:var(--amb);color:var(--ink);font-weight:700;border-radius:99px;padding:2px 6px;pointer-events:none}
+.coverBadge{position:absolute;left:50%;bottom:4px;transform:translateX(-50%);font-size:8px;letter-spacing:.04em;text-transform:uppercase;background:#11152fdc;color:#fff;font-weight:700;white-space:nowrap;border-radius:99px;padding:4px 7px;pointer-events:none}
+.draftItem.cover .coverBadge{background:var(--amb);color:var(--ink)}
 .formMsg{margin:10px 0 0;font-size:13px;color:#a02d18;min-height:1em}.formMsg.info{color:var(--muted)}
 #modalTitle:focus{outline:none}
 
