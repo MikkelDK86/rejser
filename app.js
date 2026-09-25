@@ -1,4 +1,4 @@
-const APP_VERSION='0.13.0';
+const APP_VERSION='0.15.0';
 /* Storage names. Everything on a github.io address shares one browser storage area, so ours has a unique name
    (the previous name 'travelPokedex' is only read once, to copy old data across). */
 const DB_NAME='travel-pokedex-archive',OLD_DB_NAME='travelPokedex',LEGACY_KEY='travelPokedexTrips',PLACEHOLDER='assets/placeholder.svg';
@@ -57,7 +57,14 @@ const I18N={
  'f.title':['Trip title','Rejsens titel'],'f.country':['Country','Land'],'f.city':['City or cities','By eller byer'],'f.start':['Start date','Startdato'],'f.end':['End date','Slutdato'],'f.story':['Story','Historie'],'f.photos':['Photos','Billeder'],
  'ph.title':['e.g. Summer in Italy','fx Sommer i Italien'],'ph.country':['e.g. Italy','fx Italien'],'ph.city':['e.g. Rome, Florence','fx Rom, Firenze'],'ph.story':['What do you remember?','Hvad husker du?'],
  'f.pick':['Choose photos from your phone.','Vælg billeder fra din telefon.'],'f.choose':['Choose photos','Vælg billeder'],'f.notice':['Photos are resized and stored on this device only. Your own photos replace any sample artwork. Tap a photo to make it the cover; × removes it.','Billeder gøres mindre og gemmes kun på denne enhed. Dine egne billeder erstatter eventuelle eksempelbilleder. Tryk på et billede for at gøre det til forsiden; × fjerner det.'],
- 'btn.cancel':['Cancel','Annullér'],'btn.save':['Save journey','Gem rejse'],'btn.delete':['Delete journey','Slet rejse'],'aria.close':['Close','Luk'],'loading':['Loading…','Indlæser…'],'desc':['A personal archive of the places you have been.','Et personligt arkiv over de steder, du har været.']
+ 'btn.cancel':['Cancel','Annullér'],'btn.save':['Save journey','Gem rejse'],'btn.delete':['Delete journey','Slet rejse'],'aria.close':['Close','Luk'],'loading':['Loading…','Indlæser…'],'desc':['A personal archive of the places you have been.','Et personligt arkiv over de steder, du har været.'],
+ 'dp.openBtn':['Pick on a calendar','Vælg på en kalender'],'dp.title':['Choose dates','Vælg datoer'],
+ 'dp.clear':['Clear','Ryd'],'dp.done':['Use these dates','Brug disse datoer'],
+ 'dp.hint':['Tap a start date, then an end date. Tap the same day twice for a one-day trip.','Tryk på en startdato og derefter en slutdato. Tryk på samme dag to gange for en endagstur.'],
+ 'dp.prev':['Previous month','Forrige måned'],'dp.next':['Next month','Næste måned'],
+ 'f.places':['Places','Steder'],'f.addPlace':['+ Add a place','+ Tilføj et sted'],'f.removePlace':['Remove place {n}','Fjern sted {n}'],
+ 'ph.city.one':['e.g. Rome','fx Rom'],'ed.err.stopCountry':['Add a country for place {n}.','Tilføj et land for sted {n}.'],
+ 'trip.stamps':['Stamps from this journey','Stempler fra denne rejse']
 };
 Object.assign(I18N,{
  'welcome.title':['Welcome','Velkommen'],'welcome.body':['Your journeys and photos are stored only on this device. Start with a few examples, start empty, or restore a backup.','Dine rejser og billeder gemmes kun på denne enhed. Start med nogle eksempler, start tom, eller gendan en sikkerhedskopi.'],
@@ -497,7 +504,7 @@ function deckDefault(){const d=deckTrips();let i=-1;d.forEach((t,k)=>{if(!isUpco
 function deckCard(t,i){
   const up=isUpcoming(t),no=tripNo(t),len=t.title.length,fs=len>18?18:len>13?22:len>9?26:30;
   const dd=daysUntil(t),nd=days(t),np=cityList(t).length,meta=up?tr('deck.in',{n:dd}):`${nd} ${tr('n.day',{n:nd}).toUpperCase()} · ${PL(np,'n.place').toUpperCase()}`;
-  return `<button class="dcard${up?' up':''}" data-i="${i}" onclick="deckTap(${i})" aria-label="${esc(t.title)}, ${esc(countryName(t.country))}, ${esc(fmt(t.start))}"><img data-src="${esc(cover(t))}" alt=""><span class="scrim"></span><span class="veil"></span><span class="no" style="background:${up?MAPC.upcoming:inkFor(no||1)};color:${up?'#0b0b0c':'#fff'}">${up?tr('deck.upcoming'):'№'+pad2(no||0)}</span><span class="txt"><span class="dt" style="font-size:${fs}px">${esc(t.title)}</span><span class="rule"></span><span class="dmeta">${esc(meta)}</span></span></button>`;
+  return `<button class="dcard${up?' up':''}" data-i="${i}" onclick="deckTap(${i})" aria-label="${esc(t.title)}, ${esc(tripCountryLabel(t))}, ${esc(fmt(t.start))}"><img data-src="${esc(cover(t))}" alt=""><span class="scrim"></span><span class="veil"></span><span class="no" style="background:${up?MAPC.upcoming:inkFor(no||1)};color:${up?'#0b0b0c':'#fff'}">${up?tr('deck.upcoming'):'№'+pad2(no||0)}</span><span class="txt"><span class="dt" style="font-size:${fs}px">${esc(t.title)}</span><span class="rule"></span><span class="dmeta">${esc(meta)}</span></span></button>`;
 }
 function radarHtml(n,next){
   const frac=Math.min(1,n/next),C=169.6,left=next-n,pe=passportEntries(),up=pe.up.slice(0,5);
@@ -550,12 +557,27 @@ function renderTrips(){
   const list=[...trips].sort(byStartDesc).filter(t=>jYear==='all'||(t.start||'—').slice(0,4)===jYear);
   const rows=list.map(t=>{
     const up=isUpcoming(t),sel=t.id===heroId,sub=up?tr('row.in',{n:daysUntil(t)}):PL(days(t)==='—'?0:days(t),'n.day');
-    return `<div class="jrow${sel?' sel':''}" role="button" tabindex="0" data-id="${esc(t.id)}" onclick="openTrip(this.dataset.id)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}"><div class="jl"><span class="capS">${esc(countryName(t.country))}</span><span class="jt">${esc(t.title)}</span></div><div class="jr">${NUM(dm(t.start),sel?30:26)}<span class="capS">${sub}</span></div>${up||sel?'<span class="ambDot" title="'+tr(up?'row.upcoming':'row.latest')+'"></span>':''}</div>`;
+    return `<div class="jrow${sel?' sel':''}" role="button" tabindex="0" data-id="${esc(t.id)}" onclick="openTrip(this.dataset.id)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}"><div class="jl"><span class="capS">${esc(tripCountryLabel(t))}</span><span class="jt">${esc(t.title)}</span></div><div class="jr">${NUM(dm(t.start),sel?30:26)}<span class="capS">${sub}</span></div>${up||sel?'<span class="ambDot" title="'+tr(up?'row.upcoming':'row.latest')+'"></span>':''}</div>`;
   }).join('');
   const pills=years.length>1?`<div class="pills" role="group" aria-label="${esc(tr('trips.filter'))}"><button class="pill${jYear==='all'?' on':''}" aria-pressed="${jYear==='all'}" onclick="setYear('all')">${tr('all')}</button>${years.slice(0,4).map(y=>`<button class="pill${jYear===y?' on':''}" aria-pressed="${jYear===y}" onclick="setYear('${y}')">${y}</button>`).join('')}</div>`:'';
   $('trips').innerHTML=header(false)+`<div class="head"><h1 class="h1">${tr('trips.title')}</h1><div class="cap">${PL(trips.length,'n.entry')} · ${trips.filter(isUpcoming).length} ${tr('n.upcoming')}</div></div><div class="rows">${rows||'<div class="empty">'+tr('trips.empty')+'</div>'}</div>${pills}`;
 }
 function setYear(y){jYear=y;renderTrips()}
+
+/* Trips can now cover several countries: one Country field per "place", not one per journey */
+function tripCountries(t){return uniqBy((t.locations||[]).map(l=>l.country).filter(Boolean),countryKey)}
+function tripCountryLabel(t){const c=tripCountries(t);return c.length?c.map(countryName).join(', '):countryName(t.country)}
+function tripStampsHtml(t){
+  const e=passportEntries(),countries=tripCountries(t);
+  const blocks=countries.map(c=>{
+    const ent=[...e.vis,...e.up].find(x=>x.key===countryKey(c));if(!ent)return '';
+    const svg=stampSvg({...ent,trip:ent.trip},{dashed:ent.upcoming,big:true,rot:-6,id:'big'+countryKey(c).replace(/[^a-z0-9]/g,'')})
+      .replace('width="140" height="140"','width="200" height="200"').replace('width="150" height="92"','width="240" height="147"').replace('width="170" height="112"','width="240" height="158"');
+    const caption=ent.upcoming?tr('stamptab.res',{d:fmt(ent.trip.start)}):tr('stamptab.got',{no:String(ent.no).padStart(3,'0'),d:fmt(ent.trip.start)});
+    return `<div class="stampBig">${svg}</div><p class="storyTxt center">${countries.length>1?`<b>${esc(countryName(c))}</b> · `:''}${esc(caption)}</p>`;
+  }).join('<div class="stampGap"></div>');
+  return blocks||'<div class="stampBig"></div>';
+}
 
 /* Trip detail */
 let tripTabName='story';
@@ -565,12 +587,12 @@ function renderTrip(id){
   const photosHtml=t.photos.map((p,i)=>`<button class="ph" onclick="openLightbox('${esc(t.id)}',${i})" aria-label="${esc(tr('photo.open',{n:i+1}))}"><img src="${esc(p.thumb)}" alt="${esc(tr('photo.alt',{title:t.title,n:i+1}))}" loading="lazy" decoding="async"></button>`).join('');
   const tabs=[['story',tr('tab.story')],['photos',tr('tab.photos')],['map',tr('tab.map')],['stamp',tr('tab.stamp')]];
   const code=countryCode(t.country),badgeInk=ent&&!ent.upcoming?inkFor(ent.no):RESERVED_INK;
-  $('trip').innerHTML=`<div class="hero" style="background-image:url('${esc(cover(t))}')"><span class="scrim"></span><button class="ghost" style="left:16px" onclick="goBack()" aria-label="${esc(tr('back'))}">${ico('back')}</button><button class="ghost edit" style="right:16px" data-id="${esc(t.id)}" onclick="openEditor(this.dataset.id)">${tr('edit')}</button><div class="heroText"><div class="cap2">${esc(countryName(t.country))} · ${esc(rangeText(t))}</div><h1 class="heroTitle">${esc(t.title)}</h1><span class="rule"></span></div><button class="badge" onclick="tripTabSet('stamp')" aria-label="${esc(tr('trip.stampshow',{c:countryName(t.country)}))}"><svg width="46" height="46" viewBox="0 0 120 120" aria-hidden="true" style="transform:rotate(-8deg)"><circle cx="60" cy="60" r="54" fill="none" stroke="${badgeInk}" stroke-width="5"${up?' stroke-dasharray="9 6"':''}/><circle cx="60" cy="60" r="42" fill="none" stroke="${badgeInk}" stroke-width="2"/><text x="60" y="61" text-anchor="middle" dominant-baseline="central" ${SF} font-size="34" font-weight="700" fill="${badgeInk}">${esc(code)}</text></svg></button></div>
+  $('trip').innerHTML=`<div class="hero" style="background-image:url('${esc(cover(t))}')"><span class="scrim"></span><button class="ghost" style="left:16px" onclick="goBack()" aria-label="${esc(tr('back'))}">${ico('back')}</button><button class="ghost edit" style="right:16px" data-id="${esc(t.id)}" onclick="openEditor(this.dataset.id)">${tr('edit')}</button><div class="heroText"><div class="cap2">${esc(tripCountryLabel(t))} · ${esc(rangeText(t))}</div><h1 class="heroTitle">${esc(t.title)}</h1><span class="rule"></span></div><button class="badge" onclick="tripTabSet('stamp')" aria-label="${esc(tr('trip.stampshow',{c:countryName(t.country)}))}"><svg width="46" height="46" viewBox="0 0 120 120" aria-hidden="true" style="transform:rotate(-8deg)"><circle cx="60" cy="60" r="54" fill="none" stroke="${badgeInk}" stroke-width="5"${up?' stroke-dasharray="9 6"':''}/><circle cx="60" cy="60" r="42" fill="none" stroke="${badgeInk}" stroke-width="2"/><text x="60" y="61" text-anchor="middle" dominant-baseline="central" ${SF} font-size="34" font-weight="700" fill="${badgeInk}">${esc(code)}</text></svg></button></div>
 <div class="tabs2" role="group" aria-label="${esc(tr('sections'))}">${tabs.map(([k,l])=>`<button data-tab="${k}" aria-pressed="${k===tripTabName}" class="${k===tripTabName?'on':''}" onclick="tripTabSet('${k}')">${l}</button>`).join('')}</div>
 <div class="tabBody" data-body="story"><div class="mrow"><div>${NUM(pad2(days(t)==='—'?0:days(t)),30)}<div class="cap">${tr('m.days')}</div></div><div>${NUM(pad2(cityList(t).length),30)}<div class="cap">${tr('m.places')}</div></div><div>${NUM(pad2(t.photos.length),30)}<div class="cap">${tr('m.photos')}</div></div>${no?`<div>${NUM('№'+pad2(no),30)}<div class="cap">${tr('m.entry')}</div></div>`:`<div>${NUM(daysUntil(t),30)}<div class="cap">${tr('m.togo')}</div></div>`}</div><p class="storyTxt">${esc(t.story||tr('trip.nostory'))}</p><div class="chips">${(t.locations||[]).filter(l=>l.city).map(l=>`<button class="chip link" data-ck="${esc(countryKey(l.country))}" data-c="${esc(cityKey(l.city))}" onclick="openCity(this.dataset.ck,this.dataset.c)">${esc(l.city)}</button>`).join('')}</div>${memoryCard(t)}${t.photos.slice(0,2).map((p,i)=>`<button class="pcard" onclick="openLightbox('${esc(t.id)}',${i})" aria-label="${esc(tr('photo.open',{n:i+1}))}"><img src="${esc(p.thumb)}" alt=""><span class="scrimD"></span><span class="pc"><b>${esc(tr('photo.n',{n:pad2(i+1)}))}</b><span>${esc(t.title)}</span></span></button>`).join('')}</div>
 <div class="tabBody" data-body="photos" hidden>${t.photos.length?`<div class="pgrid">${photosHtml}</div>`:'<div class="empty">'+tr('photos.empty')+'</div>'}</div>
-<div class="tabBody" data-body="map" hidden><div class="mapBox small" id="tripMapBox"></div><div id="tripMapInfo"></div><div class="capC">${esc(countryName(t.country))}${cityList(t).length?' · '+esc(cityList(t).slice(0,3).join(', ')):''}</div></div>
-<div class="tabBody" data-body="stamp" hidden><div class="stampBig">${ent?stampSvg({...ent,trip:ent.trip},{dashed:ent.upcoming,big:true,rot:-6,id:'big'}).replace('width="140" height="140"','width="200" height="200"').replace('width="150" height="92"','width="240" height="147"').replace('width="170" height="112"','width="240" height="158"'):''}</div><p class="storyTxt center">${ent?(ent.upcoming?esc(tr('stamptab.res',{d:fmt(ent.trip.start)})):esc(tr('stamptab.got',{no:String(ent.no).padStart(3,'0'),d:fmt(ent.trip.start)}))):''}</p></div>`;
+<div class="tabBody" data-body="map" hidden><div class="mapBox small" id="tripMapBox"></div><div id="tripMapInfo"></div><div class="capC">${esc(tripCountryLabel(t))}${cityList(t).length?' · '+esc(cityList(t).slice(0,3).join(', ')):''}</div></div>
+<div class="tabBody" data-body="stamp" hidden>${tripStampsHtml(t)}</div>`;
   tripTabSet(tripTabName,true);
   return true;
 }
@@ -643,6 +665,35 @@ function renderDraft(){
 }
 function makeCover(i){if(i>0){const [p]=draft.splice(i,1);draft.unshift(p);renderDraft()}}
 function removeDraft(i){const [p]=draft.splice(i,1);if(p&&p.isNew)revokePhoto(p);renderDraft()}
+
+/* ---------- Stops (a journey can cover several places, each its own city + country) ---------- */
+let draftStops=[{city:'',country:''}];
+function otherStopCityKeys(excludeIdx){return draftStops.map((s,i)=>i===excludeIdx?null:cityKey(s.city)).filter(Boolean)}
+function renderStops(){
+  const box=$('stopsList');if(!box)return;
+  box.innerHTML=draftStops.map((s,i)=>`<div class="stopRow"><span class="stopNum">${i+1}</span><div class="stopInputs"><input class="stopCity" id="stopCity${i}" placeholder="${esc(tr('ph.city.one'))}" value="${esc(s.city)}" autocomplete="off" oninput="stopCityInput(${i},this.value)" onfocus="renderStopSug(${i})" onblur="stopBlur(${i})"><div class="stopSug sugRow" id="stopSug${i}" role="group" aria-label="${esc(tr('sug.label'))}"></div><input class="stopCountry" id="stopCountry${i}" list="countryList" placeholder="${esc(tr('ph.country'))}" value="${esc(s.country)}" autocomplete="off" oninput="stopCountryInput(${i},this.value)"></div>${draftStops.length>1?`<button type="button" class="stopRm" data-i="${i}" onclick="removeStop(${i})" aria-label="${esc(tr('f.removePlace',{n:i+1}))}">${ico('close',16)}</button>`:''}</div>`).join('');
+}
+function stopCityInput(i,v){draftStops[i].city=v;renderStopSug(i)}
+function stopCountryInput(i,v){draftStops[i].country=v;renderStopSug(i)}
+let stopSugTimer=0;
+function renderStopSug(i){
+  const box=$('stopSug'+i);if(!box)return;
+  const s=draftStops[i];if(!s)return;
+  const list=citySuggestions(s.country,s.city,otherStopCityKeys(i));
+  box.innerHTML=list.map(x=>`<button type="button" class="sug" data-n="${esc(x.name)}" onclick="pickStopCity(${i},this.dataset.n)" aria-label="${esc(tr('sug.pick',{name:x.name}))}">${esc(x.name)}</button>`).join('');
+}
+function stopBlur(i){
+  clearTimeout(stopSugTimer);
+  stopSugTimer=setTimeout(()=>{
+    // only clear if the field is STILL not focused — a stale timer must never wipe out
+    // a suggestion list the person has since (re)typed into, e.g. after adding/removing a row
+    if(document.activeElement!==$('stopCity'+i)){const b=$('stopSug'+i);if(b)b.innerHTML=''}
+  },250);
+}
+function pickStopCity(i,name){draftStops[i].city=name;const el=$('stopCity'+i);if(el)el.value=name;const box=$('stopSug'+i);if(box)box.innerHTML='';const cel=$('stopCountry'+i);if(cel&&!draftStops[i].country)cel.focus()}
+function addStop(){draftStops.push({city:'',country:draftStops.length?draftStops[draftStops.length-1].country:''});renderStops();const el=$('stopCity'+(draftStops.length-1));if(el)el.focus()}
+function removeStop(i){if(draftStops.length<=1)return;draftStops.splice(i,1);renderStops()}
+function focusStop(i,field){const el=$((field==='country'?'stopCountry':'stopCity')+i);if(el)el.focus()}
 function openEditor(id,pre){
   if(typeof id!=='string')id=null;if(!pre||typeof pre!=='object')pre=null;
   lastFocus=document.activeElement;editingId=id;busy=0;saving=false;editSession++;
@@ -650,9 +701,11 @@ function openEditor(id,pre){
   draft=t?t.photos.map(p=>({...p})):[];
   $('modalTitle').textContent=tr(id?'ed.edit':'ed.add');
   $('deleteWrap').style.display=id?'flex':'none';
-  $('fTitle').value=t?t.title:(pre&&pre.title)||'';$('fCountry').value=t?t.country:(pre&&pre.country)||'';$('fCity').value=t?cityList(t).join(', '):(pre&&pre.city)||'';
+  $('fTitle').value=t?t.title:(pre&&pre.title)||'';
+  draftStops=t?(t.locations&&t.locations.length?t.locations.map(l=>({city:l.city||'',country:l.country||''})):[{city:'',country:t.country||''}]):[{city:(pre&&pre.city)||'',country:(pre&&pre.country)||''}];
+  renderStops();
   $('fStart').value=t?t.start:'';$('fEnd').value=t?t.end:'';$('fStory').value=t?t.story:'';$('fPhotos').value='';
-  setMsg('');$('saveBtn').disabled=false;renderDraft();if($('citySug'))$('citySug').innerHTML='';
+  setMsg('');$('saveBtn').disabled=false;renderDraft();updateDatesDuration();
   history.pushState({modal:true},'');
   $('modal').classList.add('show');$('app').inert=true;
   const h=$('modalTitle');h.tabIndex=-1;setTimeout(()=>h.focus(),0);
@@ -701,15 +754,18 @@ $('fPhotos').addEventListener('change',async e=>{
 
 async function saveEditor(){
   if(busy||saving)return;
-  const title=$('fTitle').value.trim(),country=$('fCountry').value.trim(),start=$('fStart').value,end=$('fEnd').value;
+  const title=$('fTitle').value.trim(),start=$('fStart').value,end=$('fEnd').value;
   if(!title){setMsg(tr('ed.err.title'));$('fTitle').focus();return}
-  if(!country){setMsg(tr('ed.err.country'));$('fCountry').focus();return}
+  const stops=draftStops.map(s=>({city:s.city.trim(),country:s.country.trim()})).filter(s=>s.city||s.country);
+  if(!stops.length){setMsg(tr('ed.err.country'));focusStop(0,'country');return}
+  const badIdx=stops.findIndex(s=>!s.country);
+  if(badIdx>=0){setMsg(tr('ed.err.stopCountry',{n:badIdx+1}));focusStop(badIdx,'country');return}
   if(start&&end&&end<start){setMsg(tr('ed.err.dates'));$('fEnd').focus();return}
-  const cities=$('fCity').value.split(',').map(x=>x.trim()).filter(Boolean);
   const old=editingId?trips.find(x=>x.id===editingId):null;
-  // pins you placed by hand survive edits (matched by city name, only while the country is unchanged)
-  const keepPins=new Map(old&&countryKey(old.country)===countryKey(country)?(old.locations||[]).filter(l=>l.city&&typeof l.lat==='number'&&typeof l.lon==='number').map(l=>[cityKey(l.city),l]):[]);
-  const trip=normalizeTrip({id:editingId||'trip_'+Date.now(),title,country,cities,locations:cities.length?cities.map(city=>{const pl=keepPins.get(cityKey(city));return pl?{city,country,lat:pl.lat,lon:pl.lon}:{city,country}}):[{city:'',country}],start,end,story:$('fStory').value.trim(),tags:old?old.tags:['NEW'],photos:draft.map(({id,asset,src,thumb})=>({id,asset,src,thumb}))});
+  // pins you placed by hand survive edits (matched by city AND country, so a pin never follows a city to the wrong place)
+  const keepPins=new Map((old&&old.locations||[]).filter(l=>l.city&&typeof l.lat==='number'&&typeof l.lon==='number').map(l=>[countryKey(l.country)+'|'+cityKey(l.city),l]));
+  const locations=stops.map(s=>{const pl=keepPins.get(countryKey(s.country)+'|'+cityKey(s.city));return pl?{city:s.city,country:s.country,lat:pl.lat,lon:pl.lon}:{city:s.city,country:s.country}});
+  const trip=normalizeTrip({id:editingId||'trip_'+Date.now(),title,country:locations[0].country,cities:locations.map(l=>l.city),locations,start,end,story:$('fStory').value.trim(),tags:old?old.tags:['NEW'],photos:draft.map(({id,asset,src,thumb})=>({id,asset,src,thumb}))});
   const keep=new Set(draft.map(p=>p.id).filter(Boolean));
   const removed=old?old.photos.filter(p=>p.id&&!keep.has(p.id)):[];
   const added=draft.filter(p=>p.isNew);
@@ -1000,24 +1056,36 @@ let celebQueue=[],gamBusy=false;
 async function checkGamification(){
   if(!db||gamBusy||dataLocked)return;gamBusy=true;
   try{
-    let stampEv=null,wishEv=null,badgeEv=null;const pe=entriesFrom(trips),now=pe.vis.map(e=>e.key);
+    let stampEvs=[],wishEv=null,badgeEv=null;const pe=entriesFrom(trips),now=pe.vis.map(e=>e.key);
     // 1) new stamps (first launch after installing this version: just remember what you already have)
     if(!meta.celebrated){await setMeta('celebrated',now)}
     else{
       const seen=new Set(meta.celebrated),fresh=pe.vis.filter(e=>!seen.has(e.key));
-      if(fresh.length){await setMeta('celebrated',[...new Set([...meta.celebrated,...now])]);stampEv={type:'stamp',e:fresh[fresh.length-1],count:pe.vis.length}}
+      // one trip can introduce several brand-new countries at once (a multi-country journey) —
+      // every one of them gets its own celebration, each showing the running total AT THAT POINT
+      // (…3, then …4, then …5), in the order the places were entered on the trip
+      if(fresh.length){
+        await setMeta('celebrated',[...new Set([...meta.celebrated,...now])]);
+        const base=pe.vis.length-fresh.length;
+        stampEvs=fresh.map((e,i)=>({type:'stamp',e,count:base+i+1}));
+      }
     }
     // 2) wishes that came true
     const wl=wishlist().map(w=>({...w}));let changed=false;const wItems=[];
     wl.forEach(w=>{if(!w.done){const st=wishStatus(w);if(st.s==='done'){w.done=st.date;changed=true;wItems.push({icon:'heart',name:wishName(w),desc:tr('wl.visited',{d:fmt(w.done)})})}}});
     if(changed)await saveMetaStamped('wishlist',wl);
     if(wItems.length)wishEv={type:'medals',tag:'cel.wish',items:wItems};
-    // 3) badges (a first run just records what is already earned, without fanfare)
+    // 3) badges: always reflect the CURRENT data. A badge earned by mistake (e.g. wrong dates,
+    //    later corrected) is removed again; a badge is only kept while its condition is still true.
+    //    (A first run just records what is already earned, without fanfare or removing anything.)
     const X=gameExtras(),S=gameStats(trips),have=meta.badges||{},firstRun=!meta.badges;
-    const fresh=BADGES.filter(b=>{let ok=false;try{ok=b.test(S,X)}catch(e){}return ok&&!have[b.id]});
-    if(fresh.length||firstRun){
-      const past=trips.filter(t=>!isUpcoming(t)).sort(byStartAsc),next={...have};
-      fresh.forEach(b=>{
+    const nowEarned=new Set(BADGES.filter(b=>{let ok=false;try{ok=b.test(S,X)}catch(e){}return ok}).map(b=>b.id));
+    const fresh=firstRun?[]:BADGES.filter(b=>nowEarned.has(b.id)&&!have[b.id]);
+    const lost=firstRun?[]:Object.keys(have).filter(id=>!nowEarned.has(id));
+    if(fresh.length||lost.length||firstRun){
+      const past=trips.filter(t=>!isUpcoming(t)).sort(byStartAsc),next=firstRun?{}:{...have};
+      lost.forEach(id=>{delete next[id]});
+      (firstRun?BADGES.filter(b=>nowEarned.has(b.id)):fresh).forEach(b=>{
         let at=todayStr();
         if(!b.cur){for(let i=1;i<=past.length;i++){let ok=false;try{ok=b.test(gameStats(past.slice(0,i)),X)}catch(e){}if(ok){at=past[i-1].start||at;break}}}
         next[b.id]={at};
@@ -1025,7 +1093,7 @@ async function checkGamification(){
       await setMeta('badges',next);
       if(fresh.length&&!firstRun)badgeEv={type:'medals',tag:fresh.length>1?'cel.badges':'cel.badge',items:fresh.map(b=>({b,name:bName(b),desc:bDesc(b)}))};
     }
-    celebQueue.push(...[stampEv,wishEv,badgeEv].filter(Boolean));
+    celebQueue.push(...stampEvs,...[wishEv,badgeEv].filter(Boolean));
     renderPassport();renderMore();
     pumpCelebrations();
   }finally{gamBusy=false}
@@ -1173,7 +1241,14 @@ function openSheet(title,html){
   sheetOpener=document.activeElement;$('sheetTitle').textContent=title;$('sheetBody').innerHTML=html;
   $('sheet').classList.add('show');$('app').inert=true;const h=$('sheetTitle');h.tabIndex=-1;setTimeout(()=>h.focus(),0);
 }
-function closeSheet(){$('sheet').classList.remove('show');$('app').inert=false;if(sheetOpener&&sheetOpener.isConnected)sheetOpener.focus()}
+function closeSheet(){
+  $('sheet').classList.remove('show');
+  // the sheet can be opened from inside the editor modal (the date picker); only release the
+  // background once nothing else that needs it (modal/lightbox/celebration) is still showing
+  const stillNeeded=['modal','lightbox','celebrate'].some(id=>$(id).classList.contains('show'));
+  $('app').inert=stillNeeded;
+  if(sheetOpener&&sheetOpener.isConnected)sheetOpener.focus();
+}
 
 /* ---------- Memory checklist (trip page) ---------- */
 function memoryCard(t){
@@ -1312,24 +1387,7 @@ function citySuggestions(countryText,token,takenKeys){
   if(tk){CITY_TABLE.forEach(([en,da,al])=>add(LANG==='da'?da:en,normCity(en),[en,da,...al]))}
   return out;
 }
-let sugTimer=0;
-function renderCitySug(){
-  const box=$('citySug'),inp=$('fCity');if(!box||!inp)return;
-  const val=inp.value,idx=val.lastIndexOf(','),token=val.slice(idx+1).trim();
-  const focused=document.activeElement===inp;
-  if(!focused&&!token){box.innerHTML='';return}
-  const taken=val.slice(0,Math.max(idx,0)).split(',').map(s=>cityKey(s.trim())).filter(Boolean);
-  const list=idx<0&&!val.trim()||idx>=0||token?citySuggestions($('fCountry').value,token,idx>=0?taken:[]):[];
-  box.innerHTML=list.map(s=>`<button type="button" class="sug" data-n="${esc(s.name)}" onclick="pickCity(this.dataset.n)" aria-label="${esc(tr('sug.pick',{name:s.name}))}">${esc(s.name)}</button>`).join('');
-}
-function pickCity(name){
-  const inp=$('fCity'),idx=inp.value.lastIndexOf(','),head=idx>=0?inp.value.slice(0,idx+1)+' ':'';
-  inp.value=head+name+', ';inp.focus();renderCitySug();
-}
-$('fCity').addEventListener('input',renderCitySug);
-$('fCity').addEventListener('focus',renderCitySug);
-$('fCity').addEventListener('blur',()=>{clearTimeout(sugTimer);sugTimer=setTimeout(renderCitySug,250)});
-$('fCountry').addEventListener('input',renderCitySug);
+
 
 /* =====================================================================
    World map (Natural Earth 50m): pan/zoom flat map + globe, real borders,
@@ -1354,7 +1412,12 @@ Object.assign(I18N,{
 });
 
 /* ---------- data ---------- */
-const CITY_LL={};CITY_TABLE.forEach(([en])=>{const ll=(window.CITY_LL_EN||{})[en];if(ll)CITY_LL[normCity(en)]=ll});
+/* city coordinates are scoped by country (ISO2 code), so same-named cities in different
+   countries — Valencia, Santiago, San José — never collide */
+function cityCoord(country,city){
+  const cc=countryCode(country);if(!cc)return null;
+  return (window.CITY_COORDS||{})[cc+'|'+normCity(city)]||null;
+}
 const RAD=Math.PI/180;
 const MAP_PALETTES={
  mist:{en:'Mist',da:'Tåge',ocean:'#d6e4ec',land:'#f3eee5',border:'#d3cab9',edge:'#f3eee5',visited:'#4b7c82',visitedDark:'#245055',upcoming:'#e3a94b',upcomingDark:'#8a5f10',wish:'#e6dfd0',dash:'#4b7c82',selected:'#c9711b',muted:'#5f6870',halo:'#fbf8f3',limb:'#b3c4cf',pinMain:'#c2542d',pinOther:'#245055'},
@@ -1446,7 +1509,7 @@ function mapStatus(){
 function mapPins(only){
   const out=[],idx=new Map();
   (only?[only]:trips).forEach(t=>(t.locations||[]).forEach(l=>{
-    if(!l.city)return;const ck=cityKey(l.city),own=typeof l.lat==='number'&&typeof l.lon==='number',ll=own?[l.lat,l.lon]:CITY_LL[ck];if(!ll)return;
+    if(!l.city)return;const ck=cityKey(l.city),own=typeof l.lat==='number'&&typeof l.lon==='number',ll=own?[l.lat,l.lon]:cityCoord(l.country,l.city);if(!ll)return;
     const id=own?countryKey(l.country)+'|'+ck:ck,up=isUpcoming(t),ex=idx.get(id);
     if(ex){if(!up)ex.up=false;return}
     const p={id,name:cityDisplay(l.city),lat:ll[0],lon:ll[1],up,country:countryKey(l.country)};idx.set(id,p);out.push(p);
@@ -1459,8 +1522,8 @@ function tripPins(t){
   const out=[],seen=new Set();
   (t.locations||[]).forEach((l,i)=>{
     if(!l.city)return;const ck=cityKey(l.city);if(seen.has(ck))return;seen.add(ck);
-    let ll=null,src='none';if(hasLL(l)){ll=[l.lat,l.lon];src='user'}else if(CITY_LL[ck]){ll=CITY_LL[ck];src='known'}
-    out.push({idx:i,id:ck,name:cityDisplay(l.city),typed:l.city,lat:ll?ll[0]:null,lon:ll?ll[1]:null,src,primary:out.length===0});
+    let ll=null,src='none';if(hasLL(l)){ll=[l.lat,l.lon];src='user'}else{const c=cityCoord(l.country,l.city);if(c){ll=c;src='known'}}
+    out.push({idx:i,id:ck,name:cityDisplay(l.city),typed:l.city,country:countryKey(l.country),lat:ll?ll[0]:null,lon:ll?ll[1]:null,src,primary:out.length===0});
   });
   return out;
 }
@@ -1807,9 +1870,9 @@ function mountTripMap(t,focusKey){
   if(tripView){tripView.destroy();tripView=null}
   tripCtx={t,focusKey};box.innerHTML='';
   const make=()=>{
-    if(WM.failed){box.innerHTML=`<canvas id="tripGlobe" data-size="300" tabindex="0" role="img" aria-label="${esc(tr('map.aria.small',{c:countryName(t.country)}))}"></canvas>`;const c=$('tripGlobe');mountGlobe(c,{state:{lon0:0,lat0:20,centered:true},focus:t.country,noRoute:true});return}
+    if(WM.failed){box.innerHTML=`<canvas id="tripGlobe" data-size="300" tabindex="0" role="img" aria-label="${esc(tr('map.aria.small',{c:tripCountryLabel(t)}))}"></canvas>`;const c=$('tripGlobe');mountGlobe(c,{state:{lon0:0,lat0:20,centered:true},focus:t.country,noRoute:true});return}
     const n=tripPins(t).filter(p=>p.lat!==null).length;
-    box.innerHTML=`<canvas class="mapCv" id="tripMap" tabindex="0" role="img" aria-label="${esc(tr('pin.aria',{c:countryName(t.country),n}))}"></canvas><div class="mapCtl"><button onclick="tripZoom(1.6)" aria-label="${esc(tr('map.zoomin'))}">${ico('plus',20)}</button><button onclick="tripZoom(1/1.6)" aria-label="${esc(tr('map.zoomout'))}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button></div><div class="mapHint" id="tripHint" hidden></div>`;
+    box.innerHTML=`<canvas class="mapCv" id="tripMap" tabindex="0" role="img" aria-label="${esc(tr('pin.aria',{c:tripCountryLabel(t),n}))}"></canvas><div class="mapCtl"><button onclick="tripZoom(1.6)" aria-label="${esc(tr('map.zoomin'))}">${ico('plus',20)}</button><button onclick="tripZoom(1/1.6)" aria-label="${esc(tr('map.zoomout'))}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button></div><div class="mapHint" id="tripHint" hidden></div>`;
     tripView=new MapView($('tripMap'),{globe:false,focus:focusKey,trip:t,onPlace:(p,lat,lon)=>saveTripPin(p.idx,lat,lon),state:{mode:'flat',cx:.5,cy:.5,k:0,lon0:0,lat0:20,z:1,init:false}});
     renderTripPlaces();
   };
@@ -1866,4 +1929,55 @@ applyStaticI18n();
 function applyHomeWash(){
   const el=$('home');if(!el)return;
   el.style.background=`radial-gradient(120% 60% at 50% -10%, ${MAPC.ocean}55, transparent 60%), var(--bg)`;
+}
+
+/* ---------- Date-range picker (a friendlier way to fill Start date / End date) ---------- */
+let dpStart=null,dpEnd=null,dpMonth=null;
+function updateDatesDuration(){
+  const el=$('datesDuration');if(!el)return;
+  const s=$('fStart').value,e=$('fEnd').value;
+  if(!s||!e||e<s){el.textContent='';return}
+  const n=Math.round((new Date(e+'T12:00:00')-new Date(s+'T12:00:00'))/864e5)+1;
+  el.textContent=PL(n,'n.day');
+}
+$('fStart').addEventListener('input',updateDatesDuration);
+$('fEnd').addEventListener('input',updateDatesDuration);
+function openDatePicker(){
+  const s=$('fStart').value,e=$('fEnd').value;
+  dpStart=s||null;dpEnd=(s&&e&&e>=s)?e:null;
+  const base=dpStart?new Date(dpStart+'T00:00:00'):new Date();
+  dpMonth=new Date(base.getFullYear(),base.getMonth(),1);
+  openSheet(tr('dp.title'),dpBody());
+}
+function dpBody(){
+  const y=dpMonth.getFullYear(),m=dpMonth.getMonth();
+  const startWd=(new Date(y,m,1).getDay()+6)%7,daysInMonth=new Date(y,m+1,0).getDate();
+  const WD=LANG==='da'?['Ma','Ti','On','To','Fr','Lø','Sø']:['Mo','Tu','We','Th','Fr','Sa','Su'];
+  const td=todayStr();
+  let cells='';
+  for(let i=0;i<startWd;i++)cells+='<span class="dpDay blank" aria-hidden="true"></span>';
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    let cls='dpDay';
+    if(dpStart&&ds===dpStart)cls+=' start';
+    if(dpEnd&&ds===dpEnd)cls+=' end';
+    if(dpStart&&dpEnd&&ds>dpStart&&ds<dpEnd)cls+=' inrange';
+    if(ds===td)cls+=' today';
+    cells+=`<button type="button" class="${cls}" data-d="${ds}" onclick="dpPick(this.dataset.d)" aria-label="${esc(fmt(ds))}">${d}</button>`;
+  }
+  const summary=dpStart?(dpEnd?`${esc(fmt(dpStart))} – ${esc(fmt(dpEnd))} · ${esc(PL(Math.round((new Date(dpEnd+'T12:00:00')-new Date(dpStart+'T12:00:00'))/864e5)+1,'n.day'))}`:esc(fmt(dpStart))):esc(tr('dp.hint'));
+  return `<div class="dpHead"><button type="button" class="dpNav" onclick="dpNav(-1)" aria-label="${esc(tr('dp.prev'))}">${ico('back',20)}</button><span class="dpMonth">${MONS[LANG][m]} ${y}</span><button type="button" class="dpNav" onclick="dpNav(1)" aria-label="${esc(tr('dp.next'))}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></div><div class="dpWd">${WD.map(w=>`<span>${w}</span>`).join('')}</div><div class="dpGrid">${cells}</div><div class="dpSummary">${summary}</div><div class="actions"><button class="secondary" onclick="dpClear()"${dpStart?'':' disabled'}>${esc(tr('dp.clear'))}</button><button class="primary" onclick="dpConfirm()"${dpStart?'':' disabled'}>${esc(tr('dp.done'))}</button></div>`;
+}
+function dpNav(delta){dpMonth=new Date(dpMonth.getFullYear(),dpMonth.getMonth()+delta,1);$('sheetBody').innerHTML=dpBody()}
+function dpPick(ds){
+  if(!dpStart||dpEnd){dpStart=ds;dpEnd=null}
+  else if(ds<dpStart){dpStart=ds;dpEnd=null}
+  else{dpEnd=ds}
+  $('sheetBody').innerHTML=dpBody();
+}
+function dpClear(){dpStart=null;dpEnd=null;$('sheetBody').innerHTML=dpBody()}
+function dpConfirm(){
+  if(!dpStart)return;
+  $('fStart').value=dpStart;$('fEnd').value=dpEnd||dpStart;
+  updateDatesDuration();closeSheet();
 }

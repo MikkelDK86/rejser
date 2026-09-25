@@ -1,6 +1,16 @@
-# Wayfarer v0.13.0 — renamed, new icon
+# Wayfarer v0.15.0 — multi-country journeys, many more cities
 
 Personal travel archive, an installable, offline-capable PWA. Data lives in IndexedDB on the device.
+
+## What's new in 0.15.0
+- **A journey can now cover several countries.** The single Country field + comma-separated cities is replaced with a repeatable list of "places," each its own city and country, in the order you visited them (Kota Kinabalu, Malaysia → Kuching, Malaysia → Siem Reap, Cambodia → Phnom Penh, Cambodia, all in one journey). Each country gets its own passport stamp, correctly dated; the trip's map pins every city across every country it touches; the Stamp tab shows one stamp per country; and saving a journey that introduces several brand-new countries at once now celebrates each one in turn (previously only the last one was shown, and the others were silently marked as already seen — a real bug this change surfaced and fixed).
+- **Hand-placed pins are matched by city AND country now**, so editing a place never lets a pin silently jump to the wrong country.
+- **Nearly every country now has at least one known city** — expanded from ~135 to 296, adding a capital (or best-known city) for almost every country in the app, plus a few extra well-travelled cities. Also fixed a latent bug: city coordinates were not scoped by country, so same-named cities in different countries (Valencia, Santiago, San José…) could have collided and pinned the wrong one as the list grew; coordinates are now looked up by country + city together.
+- **Fixed:** a timing bug where the city-suggestion dropdown could go stale and wipe out a correct suggestion shortly after adding or removing a place.
+
+## What's new in 0.13.1
+- **Fixed:** badges never went away once earned, even if the trip that earned them was later corrected. A badge (e.g. "A month away") that came from a data-entry mistake now disappears again as soon as the trip no longer qualifies — badges always reflect your current data, added and removed the same way. (Passport stamps, countries and cities already worked this way; badges now match.)
+- **New: a calendar for picking trip dates.** The existing Start date / End date fields are unchanged, but there's now a "Pick on a calendar" button next to them that opens a month view — tap a start day, then an end day, and the range highlights with a live day count (tap the same day twice for a one-day trip). Works in both languages, and a running "X dage" total shows next to the fields either way you fill them in.
 
 ## What's new in 0.13.0 — renamed to Wayfarer
 - **New name**: "Travel Pokédex" is now **Wayfarer**, everywhere in the interface (page title, Home header, More footer, iOS home-screen title, share sheet).
