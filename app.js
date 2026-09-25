@@ -1,4 +1,4 @@
-const APP_VERSION='0.19.0';
+const APP_VERSION='0.20.0';
 /* Storage names. Everything on a github.io address shares one browser storage area, so ours has a unique name
    (the previous name 'travelPokedex' is only read once, to copy old data across). */
 const DB_NAME='travel-pokedex-archive',OLD_DB_NAME='travelPokedex',LEGACY_KEY='travelPokedexTrips',PLACEHOLDER='assets/placeholder.svg';
@@ -16,10 +16,8 @@ const I18N={
  'n.place':[['place','places'],['sted','steder']],'n.stamp':[['stamp','stamps'],['stempel','stempler']],'n.day':[['day','days'],['dag','dage']],
  'n.photo':[['photo','photos'],['billede','billeder']],'n.entry':[['entry','entries'],['rejse','rejser']],'n.reserved':[['reserved','reserved'],['reserveret','reserverede']],'n.upcoming':['upcoming','kommende'],
  'nodate':['No date','Ingen dato'],
- 'deck.upcoming':['UPCOMING','KOMMENDE'],'deck.in':[['IN {n} DAY','IN {n} DAYS'],['OM {n} DAG','OM {n} DAGE']],'deck.aria':['Journeys','Rejser'],
  'home.empty':['No journeys yet.<br>Tap ＋ to add your first one.','Ingen rejser endnu.<br>Tryk på ＋ for at tilføje din første.'],
- 'home.tag':['MORE ADVENTURES AHEAD','MERE AF VERDEN VENTER'],'home.next':['NEXT JOURNEY','NÆSTE REJSE'],'home.latest':['LATEST JOURNEY','SENESTE REJSE'],'home.in':['YOUR JOURNEY STARTS IN','DIN REJSE STARTER OM'],'home.days':['days','dage'],'home.open':['View journey','Se rejse'],'home.program':['UP NEXT','NÆSTE PÅ PROGRAMMET'],'home.all':['See all','Se alle'],'home.yours':['YOUR JOURNEYS','DINE REJSER'],'home.noStory':['A journey to remember','Et minde på vej'],'home.carousel':['Your journeys','Dine rejser'],
- 'radar.tag':['NEXT STAMP AT {n}','NÆSTE STEMPEL VED {n}'],'radar.aria':['{n} of {next} countries to the next stamp. Open passport','{n} af {next} lande til næste stempel. Åbn pas'],
+ 'home.tag':['MORE ADVENTURES AHEAD','MERE AF VERDEN VENTER'],'home.next':['NEXT JOURNEY','NÆSTE REJSE'],'home.latest':['LATEST JOURNEY','SENESTE REJSE'],'home.in':['YOUR JOURNEY STARTS IN','DIN REJSE STARTER OM'],'home.days':['days','dage'],'home.done':['TRIP COMPLETED','REJSE AFSLUTTET'],'home.open':['View journey','Se rejse'],'home.all':['See all','Se alle'],'home.yours':['YOUR JOURNEYS','DINE REJSER'],'home.noStory':['A journey to remember','Et minde på vej'],'home.carousel':['Your journeys','Dine rejser'],
  'world.title':['World','Verden'],'world.aria':['Interactive globe. {n} countries collected: {list}. Drag or use the arrow keys to rotate.','Interaktiv globus. {n} lande samlet: {list}. Træk eller brug piletasterne for at rotere.'],
  'none.yet':['none yet','ingen endnu'],'globe.recentre':['Recentre the globe','Centrér globussen'],'legend.collected':['Collected','Samlet'],'legend.next':['Next trip','Næste rejse'],
  'next.up':['Next up · {c}','Næste · {c}'],'next.days':['days','dage'],'next.where':['Where next?','Hvor skal du hen?'],'next.add':['Add a future trip to see the route','Tilføj en fremtidig rejse for at se ruten'],'next.label':['Next up','Næste'],
@@ -506,61 +504,27 @@ function mountGlobe(cv,opts={}){
 function recenterGlobe(){globeState.centered=false;renderWorldLegacy()}
 
 /* ---------- Views ---------- */
-function header(isHome){
+function header(){
   const past=visited().sort(byStartDesc),th=past.slice(0,3).map(t=>`<img src="${esc(coverThumb(t))}" alt="">`).join(''),extra=Math.max(0,trips.length-3);
-  return `<div class="top">${isHome?'<div class="brand">Wayfarer</div>':`<div class="thumbs" aria-hidden="true">${th}${extra?`<span class="more">+${extra}</span>`:''}</div>`}<div class="tools"><button class="iconBtn" onclick="showView('more')" aria-label="${esc(tr('settings'))}">${ico('more')}</button><button class="iconBtn addBtn" onclick="openEditor()" aria-label="${esc(tr('add'))}">${ico('plus')}</button></div></div>`;
+  return `<div class="top"><div class="thumbs" aria-hidden="true">${th}${extra?`<span class="more">+${extra}</span>`:''}</div><div class="tools"><button class="iconBtn" onclick="showView('more')" aria-label="${esc(tr('settings'))}">${ico('more')}</button><button class="iconBtn addBtn" onclick="openEditor()" aria-label="${esc(tr('add'))}">${ico('plus')}</button></div></div>`;
 }
 const NUM=(txt,size,cls='')=>`<span class="num ${cls}" style="font-size:${size}px">${txt}</span>`;
 
-/* Home: card deck + progress ring */
-let deckIdx=null;
-const deckTrips=()=>[...trips].sort(byStartAsc);
-function deckDefault(){const d=deckTrips();let i=-1;d.forEach((t,k)=>{if(!isUpcoming(t))i=k});return Math.max(0,i)}
-function deckCard(t,i){
-  const up=isUpcoming(t),no=tripNo(t),len=t.title.length,fs=len>18?18:len>13?22:len>9?26:30;
-  const dd=daysUntil(t),nd=days(t),np=cityList(t).length,meta=up?tr('deck.in',{n:dd}):`${nd} ${tr('n.day',{n:nd}).toUpperCase()} · ${PL(np,'n.place').toUpperCase()}`;
-  return `<button class="dcard${up?' up':''}" data-i="${i}" onclick="deckTap(${i})" aria-label="${esc(t.title)}, ${esc(tripCountryLabel(t))}, ${esc(fmt(t.start))}"><img data-src="${esc(cover(t))}" alt=""><span class="scrim"></span><span class="veil"></span><span class="no" style="background:${up?MAPC.upcoming:inkFor(no||1)};color:${up?'#0b0b0c':'#fff'}">${up?tr('deck.upcoming'):'№'+pad2(no||0)}</span><span class="txt"><span class="dt" style="font-size:${fs}px">${esc(t.title)}</span><span class="rule"></span><span class="dmeta">${esc(meta)}</span></span></button>`;
-}
-function radarHtml(n,next){
-  const frac=Math.min(1,n/next),C=169.6,left=next-n,pe=passportEntries(),up=pe.up.slice(0,5);
-  const ring=`<svg width="64" height="64" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="27" fill="none" stroke="#3a3c40" stroke-width="6"/><circle cx="32" cy="32" r="27" fill="none" stroke="${MAPC.visited}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${(C*frac).toFixed(1)} ${C}" transform="rotate(-90 32 32)"/><text x="32" y="33" text-anchor="middle" dominant-baseline="central" font-size="18" font-weight="700" fill="#fff" ${SF}>${pad2(n)}</text></svg>`;
-  const chips=up.length?`<div class="pgChips">${up.map(e=>`<button class="pgChip" data-k="${esc(e.key)}" onclick="openCountry(this.dataset.k)" aria-label="${esc(e.name)}" title="${esc(e.name)}">${esc(countryCode(e.name))}</button>`).join('')}${pe.up.length>up.length?`<span class="pgMore">+${pe.up.length-up.length}</span>`:''}</div>`:'';
-  return `<div class="blackCard progressCard"><button class="pgMain" onclick="showView('passport')" aria-label="${esc(tr('radar.aria',{n,next}))}">${ring}<span class="pgTxt"><span class="capL">${esc(tr('pass.next',{n:next}))}</span><span class="nextTitle" style="font-size:19px">${left>0?esc(tr('pass.more',{n:left})):esc(tr('set.complete'))}</span></span>${ico('chev',20)}</button>${chips}</div>`;
-}
 function renderHome(){
   applyHomeWash();
   const next=nextTrip(),feature=next||[...trips].sort(byStartDesc)[0]||null,all=[...trips].sort(byStartDesc);
   const dateRange=t=>t.start?(t.end&&t.end!==t.start?`${fmt(t.start)} – ${fmt(t.end)}`:fmt(t.start)):tr('nodate');
-  const featureHtml=feature?`<button class="homeFeature" data-trip="${esc(feature.id)}" onclick="openTrip(this.dataset.trip)" aria-label="${esc(feature.title)}, ${esc(tr('home.open'))}"><img src="${esc(cover(feature))}" alt=""><span class="hfScrim"></span><span class="hfLabel">${esc(tr(next?'home.next':'home.latest'))}</span><span class="hfMore" aria-hidden="true">${ico('more',22)}</span><span class="hfInfo"><span class="hfCity">${esc(feature.title)}</span><span class="hfDate">${esc(dateRange(feature))}</span></span>${feature.story?`<span class="hfStory">${esc(feature.story.slice(0,72))}</span>`:`<span class="hfStory">${esc(tr('home.noStory'))}</span>`}<span class="hfFooter"><span class="hfRing">${next?daysUntil(next):tripNo(feature)||'✓'}</span><span class="hfFootText"><span class="capL">${esc(next?tr('home.in'):tripCountryLabel(feature))}</span><strong>${esc(next?tr('home.days'):tr('home.latest'))}</strong></span><span class="hfAction">${esc(tr('home.open'))} ›</span></span></button>`:`<div class="empty">${tr('home.empty')}</div>`;
+  const featureDays=feature?days(feature):'—';
+  const featureHtml=feature?`<button class="homeFeature" data-trip="${esc(feature.id)}" onclick="openTrip(this.dataset.trip)" aria-label="${esc(feature.title)}, ${esc(tr('home.open'))}"><img src="${esc(cover(feature))}" alt=""><span class="hfScrim"></span><span class="hfLabel">${esc(tr(next?'home.next':'home.latest'))}</span><span class="hfMore" aria-hidden="true">${ico('more',22)}</span><span class="hfInfo"><span class="hfCity">${esc(feature.title)}</span><span class="hfDate">${esc(dateRange(feature))}</span></span>${feature.story?`<span class="hfStory">${esc(feature.story.trim().slice(0,72))}${feature.story.trim().length>72?'…':''}</span>`:`<span class="hfStory">${esc(tr('home.noStory'))}</span>`}<span class="hfFooter"><span class="hfRing">${next?daysUntil(next):featureDays==='—'?'✓':pad2(featureDays)}</span><span class="hfFootText"><span class="capL">${esc(next?tr('home.in'):featureDays==='—'?tr('home.done'):tripCountryLabel(feature))}</span><strong>${esc(next?`${daysUntil(next)} ${tr('home.days')}`:featureDays==='—'?tripCountryLabel(feature):PL(featureDays,'n.day'))}</strong></span><span class="hfAction">${esc(tr('home.open'))} ›</span></span></button>`:`<div class="empty">${tr('home.empty')}</div>`;
   const carousel=all.length?`<section class="homeSection"><div class="homeSectionHead"><span>${esc(tr('home.yours'))}</span><button onclick="showView('trips')">${esc(tr('home.all'))} ${ico('chev',16)}</button></div><div class="homeCarousel" role="group" aria-roledescription="carousel" aria-label="${esc(tr('home.carousel'))}">${all.map(t=>`<button class="miniTrip" data-trip="${esc(t.id)}" onclick="openTrip(this.dataset.trip)" aria-label="${esc(t.title)}, ${esc(dateRange(t))}"><img src="${esc(coverThumb(t))}" alt=""><span>${esc(t.title)}</span></button>`).join('')}</div></section>`:'';
   $('home').innerHTML=`<div class="homeTop"><div class="homeBrand">Wayfarer<span>.</span></div><div class="tools"><button class="iconBtn" onclick="showView('more')" aria-label="${esc(tr('settings'))}">${ico('more')}</button><button class="iconBtn addBtn" onclick="openEditor()" aria-label="${esc(tr('add'))}">${ico('plus')}</button></div></div><div class="homeTag">${esc(tr('home.tag'))}</div>${featureHtml}${carousel}<div style="height:18px"></div>`;
 }
-function updateDeck(){
-  const cards=[...document.querySelectorAll('#deck .dcard')];if(!cards.length)return;
-  const T={'0':['translate(0,0) scale(1)',1,0],'-1':['translate(-40px,26px) scale(.92)',.9,.32],'-2':['translate(-70px,48px) scale(.84)',.65,.5],'1':['translate(44px,20px) scale(.94)',.95,.25]};
-  cards.forEach(c=>{
-    const i=+c.dataset.i,dd=i-deckIdx,t=T[dd]||[`translate(${dd<0?-90:70}px,60px) scale(.8)`,0,.6];
-    c.style.transform=t[0];c.style.opacity=t[1];c.style.zIndex=20-Math.abs(dd);c.querySelector('.veil').style.opacity=t[2];
-    c.classList.toggle('front',dd===0);
-    if(Math.abs(dd)<=2){const im=c.querySelector('img');if(!im.getAttribute('src'))im.src=im.dataset.src}
-    const vis=T[dd]!==undefined;c.tabIndex=vis?0:-1;c.setAttribute('aria-hidden',vis?'false':'true');c.style.pointerEvents=vis?'auto':'none';
-  });
-  const dots=$('dots'),n=cards.length;
-  if(dots)dots.innerHTML=n<=9?cards.map((_,i)=>`<span class="dot${i===deckIdx?' on':''}"></span>`).join(''):`<span class="num">${deckIdx+1} / ${n}</span>`;
-}
-let deckDrag=null,deckMoved=false;
-function deckGo(i){const n=deckTrips().length;deckIdx=Math.max(0,Math.min(n-1,i));updateDeck()}
-function deckTap(i){if(deckMoved){deckMoved=false;return}if(i===deckIdx)openTrip(deckTrips()[i].id);else deckGo(i)}
-$('home').addEventListener('pointerdown',e=>{const d=e.target.closest('#deck');if(!d)return;deckDrag=e.clientX;deckMoved=false});
-$('home').addEventListener('pointermove',e=>{if(deckDrag!==null&&Math.abs(e.clientX-deckDrag)>10)deckMoved=true});
-window.addEventListener('pointerup',e=>{if(deckDrag===null)return;const dx=e.clientX-deckDrag;deckDrag=null;if(Math.abs(dx)>40){deckGo(deckIdx+(dx<0?1:-1))}else if(!deckMoved)return;setTimeout(()=>{deckMoved=false},0)});
-$('home').addEventListener('keydown',e=>{if(!e.target.closest('#deck'))return;if(e.key==='ArrowRight'){e.preventDefault();deckGo(deckIdx+1);const c=document.querySelector('#deck .dcard.front');if(c)c.focus()}if(e.key==='ArrowLeft'){e.preventDefault();deckGo(deckIdx-1);const c=document.querySelector('#deck .dcard.front');if(c)c.focus()}});
 
 /* World (legacy dot globe, used only if the map file cannot be loaded) */
 function renderWorldLegacy(){
   const nx=nextTrip(),n=countryList().length;
   const card=nx?`<div class="blackCard nextCard"><div><div class="capL">${esc(tr('next.up',{c:countryName(nx.country)}))}</div><div class="nextTitle">${esc(nx.title)}</div><div class="capL2">${esc(fmt(nx.start))}${nx.end?' – '+esc(fmt(nx.end)):''}</div></div><div class="bigDays">${NUM(daysUntil(nx),52)}<span class="capL">${tr('next.days')}</span></div><span class="ambDot"></span></div>`:`<div class="blackCard nextCard"><div><div class="capL">${tr('next.label')}</div><div class="nextTitle">${tr('next.where')}</div><div class="capL2">${tr('next.add')}</div></div><button class="ambBtn" onclick="openEditor()" aria-label="${esc(tr('add'))}">${ico('plus')}</button></div>`;
-  $('world').innerHTML=header(false)+`<div class="head"><h1 class="h1">${tr('world.title')}</h1><div class="cap">${PL(n,'n.country')} · ${PL(allCities().length,'n.city')}</div></div><div class="globeBox"><canvas id="globe" data-size="324" tabindex="0" role="img" aria-label="${esc(tr('world.aria',{n,list:countryList().join(', ')||tr('none.yet')}))}"></canvas><button class="iconBtn resetBtn" onclick="recenterGlobe()" aria-label="${esc(tr('globe.recentre'))}">${ico('reset',20)}</button></div><div class="legend"><span><i class="lg lgv"></i>${tr('legend.collected')}</span><span><i class="lg lgu"></i>${tr('legend.next')}</span></div>${card}<div class="metrics3"><div>${NUM(pad2(n),44)}<div class="cap">${tr('m.countries')}</div></div><div>${NUM(pad2(allCities().length),44)}<div class="cap">${tr('m.cities')}</div></div><div>${NUM(pad2(visited().length),44)}<div class="cap">${tr('m.trips')}</div></div></div>`;
+  $('world').innerHTML=header()+`<div class="head"><h1 class="h1">${tr('world.title')}</h1><div class="cap">${PL(n,'n.country')} · ${PL(allCities().length,'n.city')}</div></div><div class="globeBox"><canvas id="globe" data-size="324" tabindex="0" role="img" aria-label="${esc(tr('world.aria',{n,list:countryList().join(', ')||tr('none.yet')}))}"></canvas><button class="iconBtn resetBtn" onclick="recenterGlobe()" aria-label="${esc(tr('globe.recentre'))}">${ico('reset',20)}</button></div><div class="legend"><span><i class="lg lgv"></i>${tr('legend.collected')}</span><span><i class="lg lgu"></i>${tr('legend.next')}</span></div>${card}<div class="metrics3"><div>${NUM(pad2(n),44)}<div class="cap">${tr('m.countries')}</div></div><div>${NUM(pad2(allCities().length),44)}<div class="cap">${tr('m.cities')}</div></div><div>${NUM(pad2(visited().length),44)}<div class="cap">${tr('m.trips')}</div></div></div>`;
   mountGlobe($('globe'));
 }
 
@@ -575,7 +539,7 @@ function renderTrips(){
     return `<div class="jrow${sel?' sel':''}" role="button" tabindex="0" data-id="${esc(t.id)}" onclick="openTrip(this.dataset.id)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}"><div class="jl"><span class="capS">${esc(tripCountryLabel(t))}</span><span class="jt">${esc(t.title)}</span></div><div class="jr">${NUM(dm(t.start),sel?30:26)}<span class="capS">${sub}</span></div>${up||sel?'<span class="ambDot" title="'+tr(up?'row.upcoming':'row.latest')+'"></span>':''}</div>`;
   }).join('');
   const pills=years.length>1?`<div class="pills" role="group" aria-label="${esc(tr('trips.filter'))}"><button class="pill${jYear==='all'?' on':''}" aria-pressed="${jYear==='all'}" onclick="setYear('all')">${tr('all')}</button>${years.slice(0,4).map(y=>`<button class="pill${jYear===y?' on':''}" aria-pressed="${jYear===y}" onclick="setYear('${y}')">${y}</button>`).join('')}</div>`:'';
-  $('trips').innerHTML=header(false)+`<div class="head"><h1 class="h1">${tr('trips.title')}</h1><div class="cap">${PL(trips.length,'n.entry')} · ${trips.filter(isUpcoming).length} ${tr('n.upcoming')}</div></div><div class="rows">${rows||'<div class="empty">'+tr('trips.empty')+'</div>'}</div>${pills}`;
+  $('trips').innerHTML=header()+`<div class="head"><h1 class="h1">${tr('trips.title')}</h1><div class="cap">${PL(trips.length,'n.entry')} · ${trips.filter(isUpcoming).length} ${tr('n.upcoming')}</div></div><div class="rows">${rows||'<div class="empty">'+tr('trips.empty')+'</div>'}</div>${pills}`;
 }
 function setYear(y){jYear=y;renderTrips()}
 
@@ -668,7 +632,7 @@ const isStandalone=()=>matchMedia('(display-mode: standalone)').matches||navigat
 const isIOS=()=>/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 function renderMore(){
   const install=isStandalone()?'':deferredInstall?`<div class="mcard"><div class="mi" aria-hidden="true">📲</div><div class="grow"><b>${tr('install.t')}</b><div class="small">${tr('install.d')}</div><div class="actions"><button class="secondary" onclick="installApp()">${tr('install.btn')}</button></div></div></div>`:isIOS()?`<div class="mcard"><div class="mi" aria-hidden="true">📲</div><div class="grow"><b>${tr('install.t')}</b><div class="small">${tr('install.ios')}</div></div></div>`:'';
-  $('more').innerHTML=header(false)+`<div class="head"><h1 class="h1">${tr('more.title')}</h1><div class="cap">${tr('settings')}</div></div><div class="metrics3 pad"><div>${NUM(pad2(visited().length),40)}<div class="cap">${tr('m.trips')}</div></div><div>${NUM(pad2(countryList().length),40)}<div class="cap">${tr('m.countries')}</div></div><div>${NUM(pad2(photoCount()),40)}<div class="cap">${tr('m.photos')}</div></div></div><div class="mlist">${storageOK?'':`<div class="mcard"><div class="mi" aria-hidden="true">⚠️</div><div class="grow"><b>${tr('nostorage.t')}</b><div class="small">${tr('nostorage.d')}</div></div></div>`}<div class="mcard"><div class="mi" aria-hidden="true">💾</div><div class="grow"><b>${tr('backup.t')}</b><div class="small">${tr('backup.d')}</div><div class="small st"><b>${backupStatus()}</b></div><div class="actions"><button class="secondary" onclick="exportBackup()">${tr('backup.export')}</button><button class="secondary" onclick="$('importFile').click()">${tr('backup.import')}</button></div></div></div><div class="mcard"><div class="mi" aria-hidden="true">🌐</div><div class="grow"><b>${tr('lang.t')}</b><div class="actions"><button class="secondary" aria-pressed="${LANG==='da'}" onclick="setLang('da')">Dansk</button><button class="secondary" aria-pressed="${LANG==='en'}" onclick="setLang('en')">English</button></div></div></div>${mapPaletteCard()}${install}<div id="persistNote"></div><div class="small" id="storageInfo" style="margin:14px 4px 0"></div><div class="small" style="margin:6px 4px">Wayfarer v${APP_VERSION}</div></div>`;
+  $('more').innerHTML=header()+`<div class="head"><h1 class="h1">${tr('more.title')}</h1><div class="cap">${tr('settings')}</div></div><div class="metrics3 pad"><div>${NUM(pad2(visited().length),40)}<div class="cap">${tr('m.trips')}</div></div><div>${NUM(pad2(countryList().length),40)}<div class="cap">${tr('m.countries')}</div></div><div>${NUM(pad2(photoCount()),40)}<div class="cap">${tr('m.photos')}</div></div></div><div class="mlist">${storageOK?'':`<div class="mcard"><div class="mi" aria-hidden="true">⚠️</div><div class="grow"><b>${tr('nostorage.t')}</b><div class="small">${tr('nostorage.d')}</div></div></div>`}<div class="mcard"><div class="mi" aria-hidden="true">💾</div><div class="grow"><b>${tr('backup.t')}</b><div class="small">${tr('backup.d')}</div><div class="small st"><b>${backupStatus()}</b></div><div class="actions"><button class="secondary" onclick="exportBackup()">${tr('backup.export')}</button><button class="secondary" onclick="$('importFile').click()">${tr('backup.import')}</button></div></div></div><div class="mcard"><div class="mi" aria-hidden="true">🌐</div><div class="grow"><b>${tr('lang.t')}</b><div class="actions"><button class="secondary" aria-pressed="${LANG==='da'}" onclick="setLang('da')">Dansk</button><button class="secondary" aria-pressed="${LANG==='en'}" onclick="setLang('en')">English</button></div></div></div>${mapPaletteCard()}${install}<div id="persistNote"></div><div class="small" id="storageInfo" style="margin:14px 4px 0"></div><div class="small" style="margin:6px 4px">Wayfarer v${APP_VERSION}</div></div>`;
   updateStorageInfo();
 }
 async function updateStorageInfo(){
@@ -795,20 +759,27 @@ $('fPhotos').addEventListener('change',async e=>{
   const files=[...e.target.files];e.target.value='';if(!files.length)return;
   const sess=editSession,room=Math.max(MAX_PHOTOS_PER_TRIP-draft.length,0),batch=files.slice(0,room);
   const note=files.length>room?tr('ed.max',{max:MAX_PHOTOS_PER_TRIP,n:room}):'';
-  let failed=0;busy++;$('saveBtn').disabled=true;
-  for(const [i,file] of batch.entries()){
-    if(sess!==editSession)return; // editor was closed/reopened meanwhile
-    setMsg(tr('ed.proc',{i:i+1,n:batch.length}),true);
-    try{
-      const {blob,thumbBlob}=await processImage(file),p={id:uid('ph_'),isNew:true,blob,thumbBlob,src:URL.createObjectURL(blob),thumb:URL.createObjectURL(thumbBlob)};
-      if(sess!==editSession){revokePhoto(p);return}
-      draft=draft.filter(x=>x.id); // your own photos replace the bundled sample artwork
-      draft.push(p);renderDraft();
-    }catch(err){failed++}
-  }
-  if(sess!==editSession)return;
-  busy--;if(!busy)$('saveBtn').disabled=false;
-  setMsg(failed?tr('ed.failed',{n:failed}):note,!failed&&!!note);
+  let failed=0,finished=0,cursor=0;const processed=new Array(batch.length);
+  busy++;$('saveBtn').disabled=true;
+  const worker=async()=>{
+    while(cursor<batch.length){
+      const i=cursor++,file=batch[i];
+      if(sess!==editSession)continue;
+      setMsg(tr('ed.proc',{i:finished+1,n:batch.length}),true);
+      try{
+        const {blob,thumbBlob}=await processImage(file),p={id:uid('ph_'),isNew:true,blob,thumbBlob,src:URL.createObjectURL(blob),thumb:URL.createObjectURL(thumbBlob)};
+        if(sess!==editSession)revokePhoto(p);else processed[i]=p;
+      }catch(err){failed++}
+      finished++;
+    }
+  };
+  try{
+    await Promise.all(Array.from({length:Math.min(2,batch.length)},worker));
+    if(sess!==editSession){processed.filter(Boolean).forEach(revokePhoto);return}
+    const ready=processed.filter(Boolean);
+    if(ready.length){draft=draft.filter(x=>x.id);draft.push(...ready);renderDraft()}
+    setMsg(failed?tr('ed.failed',{n:failed}):note,!failed&&!!note);
+  }finally{busy--;if(!busy)$('saveBtn').disabled=false}
 });
 
 async function saveEditor(){
@@ -835,7 +806,7 @@ async function saveEditor(){
   const editing=!!editingId;
   trips=editing?trips.map(x=>x.id===trip.id?trip:x):[trip,...trips];
   draft.forEach(p=>{delete p.isNew}); // photos now belong to the saved trip; don't revoke on close
-  deckIdx=null;renderAll();await closeEditor();
+  renderAll();await closeEditor();
   if(editing)navigate('#/trip/'+encodeURIComponent(trip.id));else showView('trips');
   requestPersistence();checkCelebrations();
 }
@@ -844,7 +815,7 @@ async function deleteCurrent(){
   const t=trips.find(x=>x.id===editingId);if(!t)return;
   try{await removeTripFromDB(t)}catch(err){setMsg(tr(err&&err.message==='locked'?'ed.err.locked':'ed.err.del'));return}
   t.photos.forEach(revokePhoto);trips=trips.filter(x=>x.id!==t.id);
-  draft=[];deckIdx=null;renderAll();await closeEditor();showView('trips');
+  draft=[];renderAll();await closeEditor();showView('trips');
 }
 let persistAsked=false;
 function requestPersistence(){if(persistAsked||!navigator.storage||!navigator.storage.persist)return;persistAsked=true;navigator.storage.persist().then(updateStorageInfo).catch(()=>{})}
@@ -933,7 +904,7 @@ $('importFile').addEventListener('change',async e=>{
 const channel='BroadcastChannel' in window?new BroadcastChannel('travel-pokedex'):null;
 function notifyOtherTabs(){if(channel)channel.postMessage('changed')}
 async function refreshFromDB(){
-  const old=trips;trips=await loadTrips();old.forEach(t=>t.photos.forEach(revokePhoto));deckIdx=null;renderAll();
+  const old=trips;trips=await loadTrips();old.forEach(t=>t.photos.forEach(revokePhoto));renderAll();
   const cur=location.hash.replace(/^#\/?/,'').split('/');
   if(cur[0]==='trip'){let id=cur[1]||'';try{id=decodeURIComponent(id)}catch(e){}if(!renderTrip(id))route()}
   else if(cur[0]==='country'){if(!renderCountry(dec(cur[1]||'')))route()}
@@ -1066,6 +1037,7 @@ const BADGES=[
  ...tiers('trips','suitcase',[5,10,25,50],S=>S.trips,v=>`${v} journeys`,v=>`${v} rejser`,v=>`Complete ${v} journeys`,v=>`Gennemfør ${v} rejser`),
  ...tiers('photos','camera',[25,100,500],S=>S.own,v=>`${v} photos`,v=>`${v} billeder`,v=>`Add ${v} of your own photos`,v=>`Tilføj ${v} egne billeder`),
  ...tiers('conts','globe',[2,3,4,5,6],S=>S.nConts,v=>`${v} continents`,v=>`${v} kontinenter`,v=>`Visit ${v} continents`,v=>`Besøg ${v} kontinenter`),
+ ...[['EU','Europe','Europa'],['AS','Asia','Asien'],['AF','Africa','Afrika'],['NA','North America','Nordamerika'],['SA','South America','Sydamerika'],['OC','Oceania','Oceanien']].map(([code,en,da])=>one('continent_'+code.toLowerCase(),'explore','globe',en+' explorer',da+' opdagelsesrejsende','Visit a country in '+en,'Besøg et land i '+da,S=>S.conts.has(code))),
  one('atlantic','explore','waves','Across the pond','Over dammen','Visit both Europe and the Americas','Besøg både Europa og Amerika',S=>S.europe&&S.americas),
  one('south','explore','south','Southern Hemisphere','Den sydlige halvkugle','Visit a country south of the equator','Besøg et land syd for ækvator',S=>S.south),
  one('equator','explore','equator','Both sides of the equator','Begge sider af ækvator','Visit countries north and south of the equator','Besøg lande både nord og syd for ækvator',S=>S.south&&S.north),
@@ -1205,7 +1177,7 @@ function renderPassport(){
   else if(passTab==='badges')panel=badgesPanel(S,X);
   else if(passTab==='sets')panel=setsPanel(S);
   else panel=wishPanel();
-  $('passport').innerHTML=header(false)+`<div class="head row2"><div><h1 class="h1">${tr('pass.title')}</h1><div class="cap">${PL(n,'n.stamp')} · ${PL(pe.up.length,'n.reserved')}</div></div><div class="ratio">${NUM(pad2(n),60)}<span class="cap">/ ${String(next).padStart(2,'0')}</span></div></div>${bar}${panel}`;
+  $('passport').innerHTML=header()+`<div class="head row2"><div><h1 class="h1">${tr('pass.title')}</h1><div class="cap">${PL(n,'n.stamp')} · ${PL(pe.up.length,'n.reserved')}</div></div><div class="ratio">${NUM(pad2(n),60)}<span class="cap">/ ${String(next).padStart(2,'0')}</span></div></div>${bar}${panel}`;
 }
 function stampsPanel(pe,n,next){
   const latestTrip=visited().sort(byStartDesc)[0],latestCountries=new Set((latestTrip?tripCountries(latestTrip):[]).map(countryKey));
@@ -1865,7 +1837,7 @@ function renderWorld(){
   if(WM.failed)return renderWorldLegacy();
   const nx=nextTrip(),n=countryList().length;
   const card=nx?`<div class="blackCard nextCard"><div><div class="capL">${esc(tr('next.up',{c:countryName(nx.country)}))}</div><div class="nextTitle">${esc(nx.title)}</div><div class="capL2">${esc(fmt(nx.start))}${nx.end?' – '+esc(fmt(nx.end)):''}</div></div><div class="bigDays">${NUM(daysUntil(nx),52)}<span class="capL">${tr('next.days')}</span></div><span class="ambDot"></span></div>`:`<div class="blackCard nextCard"><div><div class="capL">${tr('next.label')}</div><div class="nextTitle">${tr('next.where')}</div><div class="capL2">${tr('next.add')}</div></div><button class="ambBtn" onclick="openEditor()" aria-label="${esc(tr('add'))}">${ico('plus')}</button></div>`;
-  $('world').innerHTML=header(false)+`<div class="head"><h1 class="h1">${tr('world.title')}</h1><div class="cap">${PL(n,'n.country')} · ${PL(allCities().length,'n.city')}</div></div>
+  $('world').innerHTML=header()+`<div class="head"><h1 class="h1">${tr('world.title')}</h1><div class="cap">${PL(n,'n.country')} · ${PL(allCities().length,'n.city')}</div></div>
 <div class="mapBox" id="mapBox"><canvas id="worldMap" class="mapCv" tabindex="0" role="img" aria-label="${esc(tr('map.aria',{n,list:countryList().join(', ')||tr('none.yet')}))}"></canvas>
 <div class="mapModes" role="group" aria-label="${esc(tr('map.mode'))}"><button id="mmFlat" aria-pressed="true" onclick="mapMode('flat')">${tr('map.flat')}</button><button id="mmGlobe" aria-pressed="false" onclick="mapMode('globe')">${tr('map.globe')}</button></div>
 <div class="mapCtl"><button onclick="mapZoom(1.6)" aria-label="${esc(tr('map.zoomin'))}">${ico('plus',20)}</button><button onclick="mapZoom(1/1.6)" aria-label="${esc(tr('map.zoomout'))}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button><button onclick="mapFit()" aria-label="${esc(tr('map.fit'))}">${ico('reset',20)}</button></div>

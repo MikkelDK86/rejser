@@ -1,6 +1,16 @@
-# Wayfarer v0.19.0 — practical trip information
+# Wayfarer v0.20.0 — Home fixes and travel challenges
 
 Personal travel archive, an installable, offline-capable PWA. Data lives in IndexedDB on the device.
+
+## What's new in 0.20.0
+- Fixed the Home countdown to show its number with the day label, improved spacing between the trip title and dates, and added an ellipsis to shortened stories.
+- Simplified the latest-trip footer when there is no upcoming trip.
+- Added one explorer badge for each of the six continents.
+- Photo imports now process two images at a time while retaining their selected order.
+
+## What's new in 0.19.1
+- Removed unused code and styles left from the previous Home carousel.
+- Fixed the practical information edit form so its details field fills the form width and remains easy to use.
 
 ## What's new in 0.19.0
 - Added a **Practical** tab to each journey for accommodation, flights, transport, contacts and other logistics. Each entry can include notes and an address that opens in Google Maps. Entries are editable, stored with the journey and included in backups.
