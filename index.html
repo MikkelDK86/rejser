@@ -53,11 +53,11 @@ button{cursor:pointer;border:0;background:none;padding:0}
 .hfInfo{position:absolute;left:26px;right:24px;bottom:122px}
 .hfCity{font-size:clamp(38px,11vw,62px);font-weight:400;line-height:1;letter-spacing:.06em;text-transform:uppercase}
 .hfDate{margin-top:12px;font-size:15px;letter-spacing:.2em;color:#e9e7f0;text-transform:uppercase}
-.hfStory{position:absolute;right:25px;bottom:170px;max-width:34%;font-size:16px;font-style:italic;line-height:1.25;text-align:right;color:#f4edf4}
-.hfFooter{position:absolute;left:0;right:0;bottom:0;min-height:108px;padding:18px 22px;display:flex;align-items:center;gap:16px;background:#11152ff2;border:1px solid #ffffff18;border-radius:25px 25px 0 0}
+.hfStory{position:absolute;right:25px;bottom:220px;max-width:36%;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;font-size:16px;font-style:italic;line-height:1.25;text-align:right;color:#f4edf4}
+.hfFooter{position:absolute;left:0;right:0;bottom:0;min-height:108px;padding:18px 20px;display:flex;align-items:center;gap:12px;background:#11152ff2;border:1px solid #ffffff18;border-radius:25px 25px 0 0}
 .hfRing{width:70px;height:70px;border:6px solid #34364d;border-right-color:#7959f2;border-top-color:#7959f2;border-radius:50%;display:grid;place-items:center;font-size:20px;font-weight:700;flex:none}
-.hfFootText{min-width:0;flex:1}.hfFootText .capL{font-size:10px}.hfFootText strong{font-size:21px;display:block;margin-top:3px}
-.hfAction{height:54px;padding:0 20px;border-radius:30px;background:#5540bb;color:white;font-size:14px;font-weight:600;flex:none}
+.hfFootText{min-width:0;flex:1}.hfFootText .capL{font-size:10px}.hfFootText strong{font-size:clamp(16px,4.5vw,21px);line-height:1.1;display:block;margin-top:3px}
+.hfAction{height:54px;min-width:118px;padding:0 16px;border-radius:30px;background:#5540bb;color:white;font-size:14px;font-weight:600;line-height:1.2;display:flex;align-items:center;justify-content:center;white-space:nowrap;flex:none}
 .homeSection{margin:24px 16px 0;padding:18px 16px 16px;border-radius:24px;background:#f6f5fa}
 .homeSectionHead{display:flex;align-items:center;justify-content:space-between;margin:0 2px 14px;font-size:18px;font-weight:700}
 .homeSectionHead button{font-size:13px;color:#615b7e;display:flex;align-items:center;gap:4px}
@@ -70,6 +70,7 @@ button{cursor:pointer;border:0;background:none;padding:0}
 .miniTrip span{position:absolute;z-index:1;left:14px;right:12px;bottom:12px;font-size:17px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .planForm{margin:0 20px 18px;padding:16px;border-radius:22px;background:var(--card);box-shadow:var(--shadow)}
 .planForm input,.planForm select{height:46px;width:100%;border:1px solid var(--line);border-radius:14px;background:#fff;padding:0 13px;margin-bottom:9px}
+.planForm textarea{min-height:82px;width:100%;resize:vertical;border:1px solid var(--line);border-radius:14px;background:#fff;padding:12px 13px;margin-bottom:9px;line-height:1.4}
 .planForm .primary{margin-top:2px}
 .planList{display:flex;flex-direction:column;gap:9px}
 .planItem{display:flex;align-items:flex-start;gap:12px;padding:14px;border-radius:18px;background:var(--card);box-shadow:var(--shadow)}
@@ -77,6 +78,7 @@ button{cursor:pointer;border:0;background:none;padding:0}
 .planItem.done .planCheck{background:#27834a;border-color:#27834a}
 .planCopy{flex:1;min-width:0}.planTitle{font-weight:600;font-size:15px}.planType{margin-top:3px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .planNote{font-size:13px;color:var(--muted);line-height:1.45;margin-top:7px;white-space:pre-wrap}.planItem.done .planTitle{text-decoration:line-through;color:var(--muted)}
+.planAddress{display:block;margin-top:7px;font-size:13px;color:#5540bb;text-decoration:underline;text-underline-offset:2px;overflow-wrap:anywhere}
 .planActions{display:flex;gap:2px;align-items:center;flex:none}.planDelete,.planAction{width:30px;height:30px;border-radius:15px;color:var(--muted);display:grid;place-items:center}
 .planAction:disabled{opacity:.3;cursor:default}
 .planEditForm{flex:1;min-width:0}.planEditForm input,.planEditForm select{height:40px;width:100%;border:1px solid var(--line);border-radius:12px;background:#fff;padding:0 10px;margin-bottom:7px}.planEditForm .actions{margin-top:3px}

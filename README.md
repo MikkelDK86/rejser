@@ -1,6 +1,22 @@
-# Wayfarer v0.17.0 — plans for every journey
+# Wayfarer v0.19.0 — practical trip information
 
 Personal travel archive, an installable, offline-capable PWA. Data lives in IndexedDB on the device.
+
+## What's new in 0.19.0
+- Added a **Practical** tab to each journey for accommodation, flights, transport, contacts and other logistics. Each entry can include notes and an address that opens in Google Maps. Entries are editable, stored with the journey and included in backups.
+
+## What's new in 0.18.0
+- Passport stamps now use six distinct country-assigned designs, including circular seals, oval and ticket shapes, hexagonal badges and dotted postmarks.
+- Existing country colours, numbering, visit counts and data stay the same.
+
+## What's new in 0.17.3
+- The yellow highlight on the Passport stamp page now follows the country or countries on the most recent dated journey, rather than the last stamp in first-visit order.
+
+## What's new in 0.17.2
+- Adjusted the featured journey card: description stays clear of the title, and the “View journey” button is centered.
+
+## What's new in 0.17.1
+- Plan items can now include an address. Tap the address to open its location in Google Maps.
 
 ## What's new in 0.17.0
 - **Plans on each journey:** add restaurants, areas and other places with optional notes. Edit, reorder, mark visited or remove each item. Plans are stored with the journey and included in backups.
