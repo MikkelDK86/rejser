@@ -1,4 +1,4 @@
-const APP_VERSION='0.16.0';
+const APP_VERSION='0.17.0';
 /* Storage names. Everything on a github.io address shares one browser storage area, so ours has a unique name
    (the previous name 'travelPokedex' is only read once, to copy old data across). */
 const DB_NAME='travel-pokedex-archive',OLD_DB_NAME='travelPokedex',LEGACY_KEY='travelPokedexTrips',PLACEHOLDER='assets/placeholder.svg';
@@ -28,7 +28,8 @@ const I18N={
  'trips.empty':['No journeys yet.<br>Tap ＋ to add one.','Ingen rejser endnu.<br>Tryk på ＋ for at tilføje en.'],'row.upcoming':['Upcoming','Kommende'],'row.latest':['Latest','Seneste'],
  'pass.title':['Passport','Pas'],'pass.slot':['empty slot','tom plads'],'pass.next':['Next stamp at {n} countries','Næste stempel ved {n} lande'],'pass.more':['{n} more to go','Endnu {n} til'],
  'stamp.reserved':['RESERVED','RESERVERET'],'stamp.aria':['Stamp: {name}{date}{res}','Stempel: {name}{date}{res}'],'stamp.res':[' (reserved)',' (reserveret)'],
- 'back':['Back','Tilbage'],'edit':['Edit','Redigér'],'tab.story':['Story','Historie'],'tab.photos':['Photos','Billeder'],'tab.map':['Map','Kort'],'tab.stamp':['Stamp','Stempel'],'sections':['Sections','Sektioner'],
+ 'back':['Back','Tilbage'],'edit':['Edit','Redigér'],'tab.story':['Story','Historie'],'tab.photos':['Photos','Billeder'],'tab.map':['Map','Kort'],'tab.stamp':['Stamp','Stempel'],'tab.plans':['Plans','Planer'],'sections':['Sections','Sektioner'],
+ 'plans.title':['Plans for this journey','Planer for rejsen'],'plans.name':['Place or idea','Sted eller idé'],'plans.note':['Note (optional)','Note (valgfri)'],'plans.add':['Add to plans','Tilføj til planer'],'plans.empty':['Save restaurants, areas and other places you want to remember.','Skriv restauranter, områder og andre steder, du gerne vil huske.'],'plans.restaurant':['Restaurant','Restaurant'],'plans.area':['Area','Område'],'plans.other':['Other','Andet'],'plans.remove':['Remove plan item','Slet punkt'],'plans.visited':['Mark as visited','Markér som besøgt'],'plans.unvisit':['Mark as not visited','Markér som ikke besøgt'],'plans.error':['Could not save this plan. Please try again.','Planen kunne ikke gemmes. Prøv igen.'],'plans.edit':['Edit','Redigér'],'plans.save':['Save','Gem'],'plans.cancel':['Cancel','Annullér'],'plans.up':['Move up','Flyt op'],'plans.down':['Move down','Flyt ned'],
  'trip.stampshow':['Show stamp for {c}','Vis stempel for {c}'],'trip.nostory':['No story yet.','Ingen historie endnu.'],'photo.n':['PHOTO {n}','BILLEDE {n}'],'photo.open':['Open photo {n}','Åbn billede {n}'],
  'photos.empty':['No photos yet.<br>Tap Edit to add some.','Ingen billeder endnu.<br>Tryk på Redigér for at tilføje.'],'photo.alt':['{title} – photo {n}','{title} – billede {n}'],
  'map.aria':['Globe centred on {c}. Drag to rotate.','Globus centreret på {c}. Træk for at rotere.'],
@@ -371,7 +372,7 @@ function ico(kind,size=22){
     passport:'<rect x="5.5" y="3.5" width="13" height="17" rx="2.2"/><circle cx="12" cy="10.5" r="3"/><path d="M8.8 16.5h6.4"/>',
     plus:'<path d="M12 5v14M5 12h14"/>',back:'<path d="M15 6l-6 6 6 6"/>',chev:'<path d="M9 6l6 6-6 6"/>',
     more:'<circle cx="5" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="19" cy="12" r="1.4" fill="currentColor"/>',
-    close:'<path d="M6 6l12 12M18 6L6 18"/>',reset:'<path d="M4 12a8 8 0 1 0 3-6.2M4 4v4.5h4.5"/>'
+    close:'<path d="M6 6l12 12M18 6L6 18"/>',edit:'<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4z"/>',reset:'<path d="M4 12a8 8 0 1 0 3-6.2M4 4v4.5h4.5"/>'
   }[kind];
   return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 }
@@ -515,12 +516,11 @@ function radarHtml(n,next){
 }
 function renderHome(){
   applyHomeWash();
-  const next=nextTrip(),feature=next||currentTrip(),all=[...trips].sort(byStartDesc),upcoming=nextTrip();
+  const next=nextTrip(),feature=next||[...trips].sort(byStartDesc)[0]||null,all=[...trips].sort(byStartDesc);
   const dateRange=t=>t.start?(t.end&&t.end!==t.start?`${fmt(t.start)} – ${fmt(t.end)}`:fmt(t.start)):tr('nodate');
   const featureHtml=feature?`<button class="homeFeature" data-trip="${esc(feature.id)}" onclick="openTrip(this.dataset.trip)" aria-label="${esc(feature.title)}, ${esc(tr('home.open'))}"><img src="${esc(cover(feature))}" alt=""><span class="hfScrim"></span><span class="hfLabel">${esc(tr(next?'home.next':'home.latest'))}</span><span class="hfMore" aria-hidden="true">${ico('more',22)}</span><span class="hfInfo"><span class="hfCity">${esc(feature.title)}</span><span class="hfDate">${esc(dateRange(feature))}</span></span>${feature.story?`<span class="hfStory">${esc(feature.story.slice(0,72))}</span>`:`<span class="hfStory">${esc(tr('home.noStory'))}</span>`}<span class="hfFooter"><span class="hfRing">${next?daysUntil(next):tripNo(feature)||'✓'}</span><span class="hfFootText"><span class="capL">${esc(next?tr('home.in'):tripCountryLabel(feature))}</span><strong>${esc(next?tr('home.days'):tr('home.latest'))}</strong></span><span class="hfAction">${esc(tr('home.open'))} ›</span></span></button>`:`<div class="empty">${tr('home.empty')}</div>`;
-  const schedule=upcoming?`<section class="homeSection"><div class="homeSectionHead"><span>${esc(tr('home.program'))}</span><button onclick="showView('trips')">${esc(tr('home.all'))} ${ico('chev',16)}</button></div><button class="scheduleRow" data-trip="${esc(upcoming.id)}" onclick="openTrip(this.dataset.trip)"><span class="scheduleIcon" aria-hidden="true">✈</span><span class="scheduleCopy"><b>${esc(upcoming.title)}</b><span>${esc(dateRange(upcoming))}</span></span>${ico('chev',20)}</button></section>`:'';
   const carousel=all.length?`<section class="homeSection"><div class="homeSectionHead"><span>${esc(tr('home.yours'))}</span><button onclick="showView('trips')">${esc(tr('home.all'))} ${ico('chev',16)}</button></div><div class="homeCarousel" role="group" aria-roledescription="carousel" aria-label="${esc(tr('home.carousel'))}">${all.map(t=>`<button class="miniTrip" data-trip="${esc(t.id)}" onclick="openTrip(this.dataset.trip)" aria-label="${esc(t.title)}, ${esc(dateRange(t))}"><img src="${esc(coverThumb(t))}" alt=""><span>${esc(t.title)}</span></button>`).join('')}</div></section>`:'';
-  $('home').innerHTML=`<div class="homeTop"><div class="homeBrand">Wayfarer<span>.</span></div><div class="tools"><button class="iconBtn" onclick="showView('more')" aria-label="${esc(tr('settings'))}">${ico('more')}</button><button class="iconBtn addBtn" onclick="openEditor()" aria-label="${esc(tr('add'))}">${ico('plus')}</button></div></div><div class="homeTag">${esc(tr('home.tag'))}</div>${featureHtml}${schedule}${carousel}<div style="height:18px"></div>`;
+  $('home').innerHTML=`<div class="homeTop"><div class="homeBrand">Wayfarer<span>.</span></div><div class="tools"><button class="iconBtn" onclick="showView('more')" aria-label="${esc(tr('settings'))}">${ico('more')}</button><button class="iconBtn addBtn" onclick="openEditor()" aria-label="${esc(tr('add'))}">${ico('plus')}</button></div></div><div class="homeTag">${esc(tr('home.tag'))}</div>${featureHtml}${carousel}<div style="height:18px"></div>`;
 }
 function updateDeck(){
   const cards=[...document.querySelectorAll('#deck .dcard')];if(!cards.length)return;
@@ -582,18 +582,43 @@ function tripStampsHtml(t){
 }
 
 /* Trip detail */
-let tripTabName='story';
+let tripTabName='story',editingPlanId=null;
+function plansHtml(t){
+  const items=Array.isArray(t.plans)?t.plans:[];
+  const ordered=[...items];
+  const rows=ordered.map((p,i)=>`<article class="planItem${p.done?' done':''}"><button class="planCheck" data-trip="${esc(t.id)}" data-item="${esc(p.id)}" onclick="togglePlanItem(this.dataset.trip,this.dataset.item)" aria-label="${esc(p.done?tr('plans.unvisit'):tr('plans.visited'))}" aria-pressed="${p.done?'true':'false'}">${p.done?'✓':''}</button>${editingPlanId===p.id?`<form class="planEditForm" data-trip="${esc(t.id)}" data-item="${esc(p.id)}" onsubmit="updatePlanItem(event)"><input name="name" value="${esc(p.name)}" maxlength="100" required aria-label="${esc(tr('plans.name'))}"><select name="type" aria-label="${esc(tr('plans.title'))}"><option value="restaurant"${p.type==='restaurant'?' selected':''}>${esc(tr('plans.restaurant'))}</option><option value="area"${p.type==='area'?' selected':''}>${esc(tr('plans.area'))}</option><option value="other"${p.type==='other'?' selected':''}>${esc(tr('plans.other'))}</option></select><input name="note" value="${esc(p.note||'')}" maxlength="240" placeholder="${esc(tr('plans.note'))}" aria-label="${esc(tr('plans.note'))}"><div class="actions"><button type="button" class="secondary" onclick="cancelPlanEdit()">${esc(tr('plans.cancel'))}</button><button type="submit" class="primary">${esc(tr('plans.save'))}</button></div></form>`:`<div class="planCopy"><div class="planTitle">${esc(p.name)}</div><div class="planType">${esc(tr('plans.'+(['restaurant','area','other'].includes(p.type)?p.type:'other')))}</div>${p.note?`<div class="planNote">${esc(p.note)}</div>`:''}</div><div class="planActions"><button class="planAction" data-item="${esc(p.id)}" onclick="editPlanItem(this.dataset.item)" aria-label="${esc(tr('plans.edit'))}">${ico('edit',17)}</button><button class="planAction" data-trip="${esc(t.id)}" data-item="${esc(p.id)}" onclick="movePlanItem(this.dataset.trip,this.dataset.item,-1)" aria-label="${esc(tr('plans.up'))}"${i===0?' disabled':''}>↑</button><button class="planAction" data-trip="${esc(t.id)}" data-item="${esc(p.id)}" onclick="movePlanItem(this.dataset.trip,this.dataset.item,1)" aria-label="${esc(tr('plans.down'))}"${i===ordered.length-1?' disabled':''}>↓</button><button class="planDelete" data-trip="${esc(t.id)}" data-item="${esc(p.id)}" onclick="deletePlanItem(this.dataset.trip,this.dataset.item)" aria-label="${esc(tr('plans.remove'))}">${ico('close',18)}</button></div>`}</article>`).join('');
+  return `<div class="head" style="padding-top:0;padding-bottom:16px"><h2 class="h1" style="font-size:24px">${esc(tr('plans.title'))}</h2></div><form class="planForm" onsubmit="addPlanItem(event)"><input name="name" maxlength="100" required placeholder="${esc(tr('plans.name'))}" aria-label="${esc(tr('plans.name'))}"><select name="type" aria-label="${esc(tr('plans.title'))}"><option value="restaurant">${esc(tr('plans.restaurant'))}</option><option value="area">${esc(tr('plans.area'))}</option><option value="other">${esc(tr('plans.other'))}</option></select><input name="note" maxlength="240" placeholder="${esc(tr('plans.note'))}" aria-label="${esc(tr('plans.note'))}"><button class="primary" type="submit">${esc(tr('plans.add'))}</button></form><div class="planList" style="padding:0 20px 22px">${rows||`<div class="empty small">${esc(tr('plans.empty'))}</div>`}</div>`;
+}
+async function savePlanChange(id,change){
+  const old=trips.find(x=>x.id===id);if(!old)return;
+  const trip={...old,plans:change(Array.isArray(old.plans)?old.plans:[])};
+  try{await commitTrip(trip,[],[])}catch(e){toast(tr('plans.error'));return}
+  trips=trips.map(x=>x.id===id?trip:x);renderTrip(id);
+}
+function currentDetailTripId(){return dec(location.hash.split('/')[2]||'')}
+async function addPlanItem(event){
+  event.preventDefault();const form=event.currentTarget,name=form.elements.namedItem('name').value.trim();if(!name)return;
+  const item={id:uid('plan_'),name,type:form.elements.namedItem('type').value,note:form.elements.namedItem('note').value.trim(),done:false};
+  await savePlanChange(currentDetailTripId(),items=>[...items,item]);
+}
+async function togglePlanItem(id,itemId){await savePlanChange(id,items=>items.map(p=>p.id===itemId?{...p,done:!p.done}:p))}
+async function deletePlanItem(id,itemId){await savePlanChange(id,items=>items.filter(p=>p.id!==itemId))}
+function editPlanItem(id){editingPlanId=id;renderTrip(currentDetailTripId());tripTabSet('plans',true)}
+function cancelPlanEdit(){editingPlanId=null;renderTrip(currentDetailTripId());tripTabSet('plans',true)}
+async function updatePlanItem(event){event.preventDefault();const f=event.currentTarget,id=f.dataset.trip,itemId=f.dataset.item,name=f.elements.namedItem('name').value.trim();if(!name)return;const type=f.elements.namedItem('type').value,note=f.elements.namedItem('note').value.trim();editingPlanId=null;await savePlanChange(id,items=>items.map(p=>p.id===itemId?{...p,name,type,note}:p))}
+async function movePlanItem(id,itemId,delta){await savePlanChange(id,items=>{const i=items.findIndex(p=>p.id===itemId),j=i+delta;if(i<0||j<0||j>=items.length)return items;const next=[...items];[next[i],next[j]]=[next[j],next[i]];return next})}
 function renderTrip(id){
   const t=trips.find(x=>x.id===id);if(!t)return false;
   const up=isUpcoming(t),no=tripNo(t),e=passportEntries(),ent=[...e.vis,...e.up].find(x=>x.key===countryKey(t.country));
   const photosHtml=t.photos.map((p,i)=>`<button class="ph" onclick="openLightbox('${esc(t.id)}',${i})" aria-label="${esc(tr('photo.open',{n:i+1}))}"><img src="${esc(p.thumb)}" alt="${esc(tr('photo.alt',{title:t.title,n:i+1}))}" loading="lazy" decoding="async"></button>`).join('');
-  const tabs=[['story',tr('tab.story')],['photos',tr('tab.photos')],['map',tr('tab.map')],['stamp',tr('tab.stamp')]];
+  const tabs=[['story',tr('tab.story')],['plans',tr('tab.plans')],['photos',tr('tab.photos')],['map',tr('tab.map')],['stamp',tr('tab.stamp')]];
   const code=countryCode(t.country),badgeInk=ent&&!ent.upcoming?inkFor(ent.no):RESERVED_INK;
   $('trip').innerHTML=`<div class="hero" style="background-image:url('${esc(cover(t))}')"><span class="scrim"></span><button class="ghost" style="left:16px" onclick="goBack()" aria-label="${esc(tr('back'))}">${ico('back')}</button><button class="ghost edit" style="right:16px" data-id="${esc(t.id)}" onclick="openEditor(this.dataset.id)">${tr('edit')}</button><div class="heroText"><div class="cap2">${esc(tripCountryLabel(t))} · ${esc(rangeText(t))}</div><h1 class="heroTitle">${esc(t.title)}</h1><span class="rule"></span></div><button class="badge" onclick="tripTabSet('stamp')" aria-label="${esc(tr('trip.stampshow',{c:countryName(t.country)}))}"><svg width="46" height="46" viewBox="0 0 120 120" aria-hidden="true" style="transform:rotate(-8deg)"><circle cx="60" cy="60" r="54" fill="none" stroke="${badgeInk}" stroke-width="5"${up?' stroke-dasharray="9 6"':''}/><circle cx="60" cy="60" r="42" fill="none" stroke="${badgeInk}" stroke-width="2"/><text x="60" y="61" text-anchor="middle" dominant-baseline="central" ${SF} font-size="34" font-weight="700" fill="${badgeInk}">${esc(code)}</text></svg></button></div>
 <div class="tabs2" role="group" aria-label="${esc(tr('sections'))}">${tabs.map(([k,l])=>`<button data-tab="${k}" aria-pressed="${k===tripTabName}" class="${k===tripTabName?'on':''}" onclick="tripTabSet('${k}')">${l}</button>`).join('')}</div>
 <div class="tabBody" data-body="story"><div class="mrow"><div>${NUM(pad2(days(t)==='—'?0:days(t)),30)}<div class="cap">${tr('m.days')}</div></div><div>${NUM(pad2(cityList(t).length),30)}<div class="cap">${tr('m.places')}</div></div><div>${NUM(pad2(t.photos.length),30)}<div class="cap">${tr('m.photos')}</div></div>${no?`<div>${NUM('№'+pad2(no),30)}<div class="cap">${tr('m.entry')}</div></div>`:`<div>${NUM(daysUntil(t),30)}<div class="cap">${tr('m.togo')}</div></div>`}</div><p class="storyTxt">${esc(t.story||tr('trip.nostory'))}</p><div class="chips">${(t.locations||[]).filter(l=>l.city).map(l=>`<button class="chip link" data-ck="${esc(countryKey(l.country))}" data-c="${esc(cityKey(l.city))}" onclick="openCity(this.dataset.ck,this.dataset.c)">${esc(l.city)}</button>`).join('')}</div>${memoryCard(t)}${t.photos.slice(0,2).map((p,i)=>`<button class="pcard" onclick="openLightbox('${esc(t.id)}',${i})" aria-label="${esc(tr('photo.open',{n:i+1}))}"><img src="${esc(p.thumb)}" alt=""><span class="scrimD"></span><span class="pc"><b>${esc(tr('photo.n',{n:pad2(i+1)}))}</b><span>${esc(t.title)}</span></span></button>`).join('')}</div>
 <div class="tabBody" data-body="photos" hidden>${t.photos.length?`<div class="pgrid">${photosHtml}</div>`:'<div class="empty">'+tr('photos.empty')+'</div>'}</div>
 <div class="tabBody" data-body="map" hidden><div class="mapBox small" id="tripMapBox"></div><div id="tripMapInfo"></div><div class="capC">${esc(tripCountryLabel(t))}${cityList(t).length?' · '+esc(cityList(t).slice(0,3).join(', ')):''}</div></div>
+<div class="tabBody" data-body="plans" hidden>${plansHtml(t)}</div>
 <div class="tabBody" data-body="stamp" hidden>${tripStampsHtml(t)}</div>`;
   tripTabSet(tripTabName,true);
   return true;
@@ -629,7 +654,7 @@ const ALIAS={explore:'world',collection:'passport',journeys:'trips'};
 function navigate(hash){if(location.hash===hash)route();else{inAppNav++;location.hash=hash}}
 function goBack(){if(inAppNav>0){inAppNav--;history.back()}else showView('trips')}
 function showView(id){navigate('#/'+id)}
-function openTrip(id){tripTabName='story';navigate('#/trip/'+encodeURIComponent(id))}
+function openTrip(id){tripTabName='story';editingPlanId=null;navigate('#/trip/'+encodeURIComponent(id))}
 function activate(name){
   document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===name));
   document.querySelectorAll('.pillNav button').forEach(b=>{const on=b.dataset.view===(name==='country'||name==='city'?'passport':name);b.classList.toggle('on',on);if(on)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
@@ -767,7 +792,7 @@ async function saveEditor(){
   // pins you placed by hand survive edits (matched by city AND country, so a pin never follows a city to the wrong place)
   const keepPins=new Map((old&&old.locations||[]).filter(l=>l.city&&typeof l.lat==='number'&&typeof l.lon==='number').map(l=>[countryKey(l.country)+'|'+cityKey(l.city),l]));
   const locations=stops.map(s=>{const pl=keepPins.get(countryKey(s.country)+'|'+cityKey(s.city));return pl?{city:s.city,country:s.country,lat:pl.lat,lon:pl.lon}:{city:s.city,country:s.country}});
-  const trip=normalizeTrip({id:editingId||'trip_'+Date.now(),title,country:locations[0].country,cities:locations.map(l=>l.city),locations,start,end,story:$('fStory').value.trim(),tags:old?old.tags:['NEW'],photos:draft.map(({id,asset,src,thumb})=>({id,asset,src,thumb}))});
+  const trip=normalizeTrip({id:editingId||'trip_'+Date.now(),title,country:locations[0].country,cities:locations.map(l=>l.city),locations,start,end,story:$('fStory').value.trim(),tags:old?old.tags:['NEW'],plans:old&&Array.isArray(old.plans)?old.plans:[],photos:draft.map(({id,asset,src,thumb})=>({id,asset,src,thumb}))});
   const keep=new Set(draft.map(p=>p.id).filter(Boolean));
   const removed=old?old.photos.filter(p=>p.id&&!keep.has(p.id)):[];
   const added=draft.filter(p=>p.isNew);

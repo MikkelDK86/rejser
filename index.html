@@ -45,7 +45,7 @@ button{cursor:pointer;border:0;background:none;padding:0}
 .homeTop{padding:28px 20px 0;display:flex;align-items:center;justify-content:space-between}
 .homeBrand{font-size:28px;font-weight:700;letter-spacing:-.04em;color:#17172d}.homeBrand span{color:#7253e8}
 .homeTag{padding:2px 20px 0;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#66627f;font-weight:600}
-.homeFeature{position:relative;height:clamp(370px,64vh,560px);min-height:410px;margin:26px 16px 0;border-radius:26px;overflow:hidden;background:#17172d;color:#fff;box-shadow:0 16px 34px rgba(20,18,50,.18)}
+.homeFeature{position:relative;display:block;width:calc(100% - 32px);height:clamp(370px,64vh,560px);min-height:410px;margin:26px 16px 0;padding:0;appearance:none;text-align:left;font-family:inherit;border-radius:26px;overflow:hidden;background:#17172d;color:#fff;box-shadow:0 16px 34px rgba(20,18,50,.18)}
 .homeFeature>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .homeFeature .hfScrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,13,37,.28),rgba(11,13,37,.02) 38%,rgba(11,13,37,.35) 55%,#11152f 84%)}
 .hfLabel{position:absolute;top:24px;left:24px;padding:11px 18px;border-radius:24px;background:#b94d55;color:white;font-size:11px;letter-spacing:.2em;font-weight:700}
@@ -68,6 +68,19 @@ button{cursor:pointer;border:0;background:none;padding:0}
 .miniTrip{position:relative;width:min(53vw,230px);height:118px;flex:none;border-radius:18px;overflow:hidden;color:#fff;text-align:left;scroll-snap-align:start;background:#34364d}
 .miniTrip img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.miniTrip:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 25%,rgba(12,15,39,.9))}
 .miniTrip span{position:absolute;z-index:1;left:14px;right:12px;bottom:12px;font-size:17px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.planForm{margin:0 20px 18px;padding:16px;border-radius:22px;background:var(--card);box-shadow:var(--shadow)}
+.planForm input,.planForm select{height:46px;width:100%;border:1px solid var(--line);border-radius:14px;background:#fff;padding:0 13px;margin-bottom:9px}
+.planForm .primary{margin-top:2px}
+.planList{display:flex;flex-direction:column;gap:9px}
+.planItem{display:flex;align-items:flex-start;gap:12px;padding:14px;border-radius:18px;background:var(--card);box-shadow:var(--shadow)}
+.planCheck{width:28px;height:28px;border:1.5px solid #aaaab2;border-radius:50%;display:grid;place-items:center;flex:none;margin-top:1px;color:#fff}
+.planItem.done .planCheck{background:#27834a;border-color:#27834a}
+.planCopy{flex:1;min-width:0}.planTitle{font-weight:600;font-size:15px}.planType{margin-top:3px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.planNote{font-size:13px;color:var(--muted);line-height:1.45;margin-top:7px;white-space:pre-wrap}.planItem.done .planTitle{text-decoration:line-through;color:var(--muted)}
+.planActions{display:flex;gap:2px;align-items:center;flex:none}.planDelete,.planAction{width:30px;height:30px;border-radius:15px;color:var(--muted);display:grid;place-items:center}
+.planAction:disabled{opacity:.3;cursor:default}
+.planEditForm{flex:1;min-width:0}.planEditForm input,.planEditForm select{height:40px;width:100%;border:1px solid var(--line);border-radius:12px;background:#fff;padding:0 10px;margin-bottom:7px}.planEditForm .actions{margin-top:3px}
+#trip .tabBody[data-body="plans"]{padding:18px 0 0}
 .deckWrap{position:relative;height:376px;margin-top:22px;overflow:visible}
 .deck{position:relative;width:250px;height:352px;margin:0 auto;touch-action:pan-y;user-select:none;-webkit-user-select:none;outline-offset:8px}
 .dcard{position:absolute;left:0;top:0;width:250px;height:352px;border-radius:22px;overflow:hidden;background:#3a3c40;transition:transform .34s cubic-bezier(.2,.8,.2,1),opacity .34s;box-shadow:0 14px 28px rgba(0,0,0,.18);cursor:pointer;color:#fff;text-align:left;display:block}

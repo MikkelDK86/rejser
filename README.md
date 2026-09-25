@@ -1,10 +1,17 @@
-# Wayfarer v0.16.0 — redesigned home screen
+# Wayfarer v0.17.0 — plans for every journey
 
 Personal travel archive, an installable, offline-capable PWA. Data lives in IndexedDB on the device.
 
+## What's new in 0.17.0
+- **Plans on each journey:** add restaurants, areas and other places with optional notes. Edit, reorder, mark visited or remove each item. Plans are stored with the journey and included in backups.
+- **Simpler Home screen:** removed the redundant “Up next” row below the featured journey; the journey carousel now follows the featured card directly.
+
+## What's new in 0.16.1 — home feature card fix
+- Fixed the featured journey card width so it fills the screen on mobile browsers.
+- The Home screen selects the latest saved journey directly when there is no upcoming journey.
+
 ## What's new in 0.16.0 — redesigned Home
 - **Featured journey:** the Home screen highlights the next upcoming journey with its cover photo and a countdown. When there is no upcoming journey, it highlights the latest journey instead.
-- **Up next:** when a future journey exists, a compact program row links to it.
 - **Your journeys:** all journeys appear in a smaller horizontal carousel that can be swiped through; tap a card to open that journey.
 - The bottom navigation and local data storage are unchanged.
 
