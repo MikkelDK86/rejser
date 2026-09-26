@@ -1,6 +1,9 @@
-# Wayfare v0.20.3 — clearer dates and year filters
+# Wayfarer v0.20.4 — world completion graph
 
 Personal travel archive, an installable, offline-capable PWA. Data lives in IndexedDB on the device.
+
+## What's new in 0.20.4
+- Added a map-page completion graph with visited countries, the percentage of Wayfarer's country and territory list visited, and the number remaining.
 
 ## What's new in 0.20.3
 - Journey rows now show the year next to the duration or countdown.
