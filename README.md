@@ -1,6 +1,10 @@
-# Wayfarer v0.20.2 — clearer cover photo selection
+# Wayfare v0.20.3 — clearer dates and year filters
 
 Personal travel archive, an installable, offline-capable PWA. Data lives in IndexedDB on the device.
+
+## What's new in 0.20.3
+- Journey rows now show the year next to the duration or countdown.
+- The year filter includes every year represented by a journey and scrolls horizontally when needed.
 
 ## What's new in 0.20.2
 - Photo thumbnails in the journey editor now clearly show which one is the cover and which can be selected as the cover. The selection is saved with the journey and shown across the app.

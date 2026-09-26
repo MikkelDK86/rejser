@@ -1,4 +1,4 @@
-const APP_VERSION='0.20.2';
+const APP_VERSION='0.20.3';
 /* Storage names. Everything on a github.io address shares one browser storage area, so ours has a unique name
    (the previous name 'travelPokedex' is only read once, to copy old data across). */
 const DB_NAME='travel-pokedex-archive',OLD_DB_NAME='travelPokedex',LEGACY_KEY='travelPokedexTrips',PLACEHOLDER='assets/placeholder.svg';
@@ -531,17 +531,18 @@ function renderWorldLegacy(){
 /* Journeys */
 let jYear='all';
 function renderTrips(){
-  const heroId=(currentTrip()||{}).id,years=[...new Set(trips.map(t=>t.start?t.start.slice(0,4):'—'))].sort().reverse();
+  const heroId=(currentTrip()||{}).id,years=[...new Set(trips.map(t=>t.start?t.start.slice(0,4):'—'))].sort((a,b)=>a==='—'?1:b==='—'?-1:b.localeCompare(a));
   if(jYear!=='all'&&!years.includes(jYear))jYear='all';
-  const list=[...trips].sort(byStartDesc).filter(t=>jYear==='all'||(t.start||'—').slice(0,4)===jYear);
+  const list=[...trips].sort(byStartDesc).filter(t=>jYear==='all'||(t.start?t.start.slice(0,4):'—')===jYear);
   const rows=list.map(t=>{
     const up=isUpcoming(t),sel=t.id===heroId,sub=up?tr('row.in',{n:daysUntil(t)}):PL(days(t)==='—'?0:days(t),'n.day');
-    return `<div class="jrow${sel?' sel':''}" role="button" tabindex="0" data-id="${esc(t.id)}" onclick="openTrip(this.dataset.id)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}"><div class="jl"><span class="capS">${esc(tripCountryLabel(t))}</span><span class="jt">${esc(t.title)}</span></div><div class="jr">${NUM(dm(t.start),sel?30:26)}<span class="capS">${sub}</span></div>${up||sel?'<span class="ambDot" title="'+tr(up?'row.upcoming':'row.latest')+'"></span>':''}</div>`;
+    const yearLabel=t.start?`${t.start.slice(0,4)} · `:'';
+    return `<div class="jrow${sel?' sel':''}" role="button" tabindex="0" data-id="${esc(t.id)}" onclick="openTrip(this.dataset.id)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}"><div class="jl"><span class="capS">${esc(tripCountryLabel(t))}</span><span class="jt">${esc(t.title)}</span></div><div class="jr">${NUM(dm(t.start),sel?30:26)}<span class="capS">${esc(yearLabel+sub)}</span></div>${up||sel?'<span class="ambDot" title="'+tr(up?'row.upcoming':'row.latest')+'"></span>':''}</div>`;
   }).join('');
-  const pills=years.length>1?`<div class="pills" role="group" aria-label="${esc(tr('trips.filter'))}"><button class="pill${jYear==='all'?' on':''}" aria-pressed="${jYear==='all'}" onclick="setYear('all')">${tr('all')}</button>${years.slice(0,4).map(y=>`<button class="pill${jYear===y?' on':''}" aria-pressed="${jYear===y}" onclick="setYear('${y}')">${y}</button>`).join('')}</div>`:'';
+  const pills=years.length>1?`<div class="pills" role="group" aria-label="${esc(tr('trips.filter'))}"><button class="pill${jYear==='all'?' on':''}" aria-pressed="${jYear==='all'}" onclick="setYear('all')">${tr('all')}</button>${years.map(y=>`<button class="pill${jYear===y?' on':''}" aria-pressed="${jYear===y}" onclick="setYear('${y}')">${y}</button>`).join('')}</div>`:'';
   $('trips').innerHTML=header()+`<div class="head"><h1 class="h1">${tr('trips.title')}</h1><div class="cap">${PL(trips.length,'n.entry')} · ${trips.filter(isUpcoming).length} ${tr('n.upcoming')}</div></div><div class="rows">${rows||'<div class="empty">'+tr('trips.empty')+'</div>'}</div>${pills}`;
 }
-function setYear(y){jYear=y;renderTrips()}
+function setYear(y){jYear=y;renderTrips();const row=document.querySelector('.pills'),active=row&&row.querySelector('.pill.on');if(row&&active)row.scrollTo({left:Math.max(0,active.offsetLeft-row.offsetLeft-row.clientWidth/2+active.clientWidth/2),behavior:'smooth'})}
 
 /* Trips can now cover several countries: one Country field per "place", not one per journey */
 function tripCountries(t){return uniqBy((t.locations||[]).map(l=>l.country).filter(Boolean),countryKey)}
