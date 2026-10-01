@@ -1,4 +1,4 @@
-const APP_VERSION='0.20.4';
+const APP_VERSION='0.20.5';
 /* Storage names. Everything on a github.io address shares one browser storage area, so ours has a unique name
    (the previous name 'travelPokedex' is only read once, to copy old data across). */
 const DB_NAME='travel-pokedex-archive',OLD_DB_NAME='travelPokedex',LEGACY_KEY='travelPokedexTrips',PLACEHOLDER='assets/placeholder.svg';
@@ -856,19 +856,39 @@ function toast(msg,opts={}){
 
 /* ---------- Backup ---------- */
 const blobToDataURL=b=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error);r.readAsDataURL(b)});
+let exportInProgress=false;
+async function backupExportSources(){
+  const tx=db.transaction(['trips','photos'],'readonly'),done=txDone(tx);
+  const [recs,photoIds]=await Promise.all([reqP(tx.objectStore('trips').getAll()),reqP(tx.objectStore('photos').getAllKeys())]);
+  await done;return {recs,photoIds};
+}
+async function backupPhoto(id){
+  const tx=db.transaction('photos','readonly'),done=txDone(tx),req=reqP(tx.objectStore('photos').get(id));
+  const photo=await req;await done;if(!photo)throw new Error('A saved photo could not be read');return photo;
+}
 async function exportBackup(){
   if(!db){toast(tr('toast.nostore.export'));return}
+  if(exportInProgress)return;
+  exportInProgress=true;
   try{
     toast(tr('toast.prep'),{sticky:true});
-    const {recs,photos}=await readAll();
-    const out={app:'travel-pokedex',version:1,exportedAt:new Date().toISOString(),trips:recs,photos:[],wishlist:wishlist(),badges:meta.badges||{}};
-    for(const p of photos)out.photos.push({id:p.id,tripId:p.tripId,blob:await blobToDataURL(p.blob),thumb:await blobToDataURL(p.thumb||p.blob)});
-    const name=`wayfarer-backup-${todayStr()}.json`,blob=new Blob([JSON.stringify(out)],{type:'application/json'}),file=new File([blob],name,{type:'application/json'});
+    const {recs,photoIds}=await backupExportSources(),parts=[`{"app":"travel-pokedex","version":1,"exportedAt":${JSON.stringify(new Date().toISOString())},"trips":${JSON.stringify(recs)},"photos":[`];
+    for(let i=0;i<photoIds.length;i++){
+      const p=await backupPhoto(photoIds[i]);
+      if(i)parts.push(',');
+      const photo={id:p.id,tripId:p.tripId,blob:await blobToDataURL(p.blob),thumb:await blobToDataURL(p.thumb||p.blob)};
+      parts.push(JSON.stringify(photo));
+      if(i%4===3)await new Promise(resolve=>setTimeout(resolve,0));
+    }
+    parts.push(`],"wishlist":${JSON.stringify(wishlist())},"badges":${JSON.stringify(meta.badges||{})}}`);
+    const name=`wayfarer-backup-${todayStr()}.json`,blob=new Blob(parts,{type:'application/json'});parts.length=0;
+    const file=new File([blob],name,{type:'application/json'});
     $('toast').classList.remove('show');
     if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:'Wayfarer backup'});await markBackedUp();return}catch(e){if(e.name==='AbortError')return}}
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
     await markBackedUp();toast(tr('toast.saved'));
   }catch(err){console.error(err);toast(tr('toast.fail'))}
+  finally{exportInProgress=false}
 }
 function parseBackup(data){
   if(!data||data.app!=='travel-pokedex'||!Array.isArray(data.trips)||!Array.isArray(data.photos))throw new Error('Not a Wayfarer backup');   // the internal format id stays 'travel-pokedex' so backups made before the rename still import

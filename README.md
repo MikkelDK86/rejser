@@ -1,6 +1,9 @@
-# Wayfarer v0.20.4 — world completion graph
+# Wayfarer v0.20.5 — safer mobile backups
 
 Personal travel archive, an installable, offline-capable PWA. Data lives in IndexedDB on the device.
+
+## What's new in 0.20.5
+- Reduced peak memory use during backup export: photos are read individually and the JSON backup is assembled in chunks. Added a guard against overlapping exports.
 
 ## What's new in 0.20.4
 - Added a map-page completion graph with visited countries, the percentage of Wayfarer's country and territory list visited, and the number remaining.
