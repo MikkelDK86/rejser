@@ -1,6 +1,9 @@
-# Wayfarer v0.20.5 — safer mobile backups
+# Wayfarer v0.20.6 — journey checklists
 
 Personal travel archive, an installable, offline-capable PWA. Data lives in IndexedDB on the device.
+
+## What's new in 0.20.6
+- Added multiple editable checklists to each journey's Practical tab. Checklist titles and items, including their checked state, are saved with the journey and included in backups.
 
 ## What's new in 0.20.5
 - Reduced peak memory use during backup export: photos are read individually and the JSON backup is assembled in chunks. Added a guard against overlapping exports.
