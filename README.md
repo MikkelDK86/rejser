@@ -1,6 +1,9 @@
-# Wayfarer v0.20.6 — journey checklists
+# Wayfarer v0.20.7 — latest trip on Home
 
 Personal travel archive, an installable, offline-capable PWA. Data lives in IndexedDB on the device.
+
+## What's new in 0.20.7
+- The Home screen now features the latest past journey when one exists, so its own photos take priority over a future trip. The smaller journey carousel is unchanged. If there is no past journey, the next upcoming one remains featured.
 
 ## What's new in 0.20.6
 - Added multiple editable checklists to each journey's Practical tab. Checklist titles and items, including their checked state, are saved with the journey and included in backups.
