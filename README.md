@@ -1,6 +1,10 @@
-# Wayfarer v0.20.8 — checklist title field layout
+# Wayfarer v0.20.9 — journey journal
 
 Personal travel archive, an installable, offline-capable PWA. Data lives in IndexedDB on the device.
+
+## What's new in 0.20.9
+- Reworked the journey History tab into a journal: the trip story is an introduction, and you can add, edit and delete memory notes with an optional date and place.
+- Kept the existing memory checklist available in a compact disclosure section. Journal entries are stored with the journey and included in backups.
 
 ## What's new in 0.20.8
 - Fixed the checklist create and rename forms on narrow screens so title inputs get usable width and buttons no longer expand over them.
@@ -180,3 +184,4 @@ See `fonts/README.txt`. Without it the app uses the system font.
 - The globe is built from a hand-drawn low-resolution land mask, so coastlines are approximate. Countries without a drawn outline are highlighted by a small area around their centre, and every collected country gets a marker.
 - One country per journey in the editor (the data model already supports several).
 - Data is per device/browser. Use Export/Import to move it.
+
