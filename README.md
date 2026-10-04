@@ -1,6 +1,9 @@
-# Wayfarer v0.20.7 — latest trip on Home
+# Wayfarer v0.20.8 — checklist title field layout
 
 Personal travel archive, an installable, offline-capable PWA. Data lives in IndexedDB on the device.
+
+## What's new in 0.20.8
+- Fixed the checklist create and rename forms on narrow screens so title inputs get usable width and buttons no longer expand over them.
 
 ## What's new in 0.20.7
 - The Home screen now features the latest past journey when one exists, so its own photos take priority over a future trip. The smaller journey carousel is unchanged. If there is no past journey, the next upcoming one remains featured.
